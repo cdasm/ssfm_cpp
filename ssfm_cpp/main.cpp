@@ -20,7 +20,11 @@ int main_()
 	
 
 	MatrixXd m = MatrixXd::Random(3,3);
-	m = (m + MatrixXd::Constant(3,3,1.2)) * 50;
+	cout<<m.cols()<<endl;
+	cout<<m.rows()<<endl;
+
+	cout<<m;
+	m = (m + MatrixXd::Constant(3,3,1.2)) ;
 	cout << "m =" << endl << m << endl;
 	VectorXd v(3);
 	v << 1, 2, 3;
@@ -37,6 +41,8 @@ int main_()
 
 int main()
 {
+	main_();
+	
 	_chdir("D:\\agood");
 
 	vector<vector<vector<int> > > features;
@@ -60,6 +66,24 @@ int main()
 	vector<vector<double> > reconstructedPoints(trajectories.first.size(),vector<double>(3,0.0));
 	
 	vector<bool> alreadyReconstructed(trajectories.first.size(),false);
+
+	vector<vector<int> > points1(correspondences[0].size()),points2(correspondences[0].size());
+
+	vector<int> index(correspondences[0].size());
+
+	int count=0;
+	for ( auto&k:correspondences[0])
+	{
+		points1[count]=features[0][k.first];
+		points2[count]=features[1][k.second];
+		index[count]=featureIsPoint[0][k.first];
+		++count;
+	}
+
+	vector<int> imageSize(2);
+	imageSize[0]=512;imageSize[1]=256;
+
+	geometricReconstructionFrom2Frames(points1,points2,transitions[1],rotations[1],imageSize);
 	//set_intersection(contain[0].begin(),contain[0].end(),contain[1].begin(),contain[1].end(),back_inserter(pointOnFirst2Frames));
 	
 	//auto pointOnFirst2Frames=set_intersect(contain[0],contain[1]);

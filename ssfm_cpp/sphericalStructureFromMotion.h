@@ -2,6 +2,7 @@
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+#include <Eigen/SVD>
 #include <vector>
 #include <string>
 #include <unordered_set>
@@ -44,8 +45,12 @@ auto collectFromPairwiseMatching(const string& featureLst,const string& matchLst
 //_ordinary means the transition and rotation will be estimated for the camera, and the camera is 6-degree free
 enum cameraType{_static,_unitLength,_ordinary};
 
+
+
+vector<pair<MatrixXd,MatrixXd> > transitionAndRotationFromEssential(MatrixXd essential);
+
 template<class T>
-auto geometricReconstructionFrom2Frames(const vector<vector<T> >& pnts1,const vector<vector<T> >& pnts2,vector<double>& transition,vector<vector<double> > rotation)->vector<vector<double> >
+auto geometricReconstructionFrom2Frames(const vector<vector<T> >& pnts1,const vector<vector<T> >& pnts2,vector<double>& transition,vector<vector<double> >& rotation,const vector<T>& imageSize)->pair<vector<vector<double> >,vector<double> >
 {
 	assert(pnts1.size()==pnts2.size());
 
@@ -54,7 +59,71 @@ auto geometricReconstructionFrom2Frames(const vector<vector<T> >& pnts1,const ve
 
 	for (int i = 0; i < pnts1.size(); i++)
 	{
-		sphericalPoints1[i]=
+		sphericalPoints1[i]=imageCordinate2Phere(pnts1[i],imageSize);
+		sphericalPoints2[i]=imageCordinate2Phere(pnts2[i],imageSize);
 	}
+
+	vector<vector<double> > points(pnts1.size(),vector<double>(3,0.0));
+	vector<double> errors(pnts1.size(),-1);
+
+
+	MatrixXd observation=MatrixXd::Zero(points.size(),9);
+	
+	for (int i = 0; i < points.size(); i++)
+	{
+		//a,&b,&c,&d,&e,&f;
+		double &a=sphericalPoints1[i][0];
+		double &b=sphericalPoints1[i][1];
+		double &c=sphericalPoints1[i][2];
+		double &d=sphericalPoints2[i][0];
+		double &e=sphericalPoints2[i][1];
+		double &f=sphericalPoints2[i][2];
+
+		observation(i,0) = a*d;
+		observation(i,1) = b*d;
+		observation(i,2) = c*d;
+		observation(i,3) = a*e;
+		observation(i,4) = b*e;
+		observation(i,5) = c*e;
+		observation(i,6) = a*f;
+		observation(i,7) = b*f;
+		observation(i,8) = c*f;
+
+
+	}
+
+	JacobiSVD<decltype(observation)> svd(observation, Eigen::ComputeFullU |
+                                        Eigen::ComputeFullV);
+
+	//std::cout << "singular values" << std::endl
+    //      << svd.singularValues() << std::endl;
+	//std::cout << "matrix U" << std::endl << svd.matrixU() << std::endl;
+	std::cout << "matrix V" << std::endl << svd.matrixV() << std::endl;
+
+	vector<MatrixXd> essentialMatrixes(2,MatrixXd::Zero(3,3));
+
+	auto matrixV=svd.matrixV();
+
+	for (int i = 0; i < 2; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			for (int k = 0; k < 3; k++)
+			{
+				essentialMatrixes[i](j,k)=matrixV (j*3+k,7+i);
+			}
+		}
+	}
+
+	vector<pair<MatrixXd,MatrixXd> > transtionAndRotations;
+	for (int i = 0; i < 2; i++)
+	{
+		auto ttar=transitionAndRotationFromEssential(essentialMatrixes[i]);
+		transtionAndRotations.insert(transtionAndRotations.end(),ttar.begin(),ttar.end());
+	}
+	
+
+	//cout<<observation;
+	return make_pair(points,errors);
 
 }
