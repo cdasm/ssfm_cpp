@@ -47,7 +47,7 @@ enum cameraType{_static,_unitLength,_ordinary};
 
 
 
-vector<pair<MatrixXd,MatrixXd> > transitionAndRotationFromEssential(MatrixXd essential);
+vector<pair<MatrixXd,MatrixXd> > transitionAndRotationFromEssential(const MatrixXd& essential);
 
 template<class T>
 auto geometricReconstructionFrom2Frames(const vector<vector<T> >& pnts1,const vector<vector<T> >& pnts2,vector<double>& transition,vector<vector<double> >& rotation,const vector<T>& imageSize)->pair<vector<vector<double> >,vector<double> >
