@@ -19,10 +19,10 @@ auto incrementalTrajectoryDetect(const vector<vector<Pnt> >& features, vector<ma
 		markers[i].resize(features[i].size(),false);
 	}
 
-	for (size_t i = 0; i < features.size()-1; i++)
+	for (int i = 0; i < features.size()-1; i++)
 	{
 		cout<<"processing frame " <<i<<endl;
-		for (size_t j = 0; j < markers[i].size(); j++)
+		for (int j = 0; j < markers[i].size(); j++)
 		{
 			if(!markers[i][j])
 			{
@@ -206,9 +206,9 @@ vector<pair<MatrixXd,MatrixXd> > transitionAndRotationFromEssential(const Matrix
 	if(R2.determinant()<0)
 		R2*=-1;
 
-	//cout<<Tx<<endl;
-	//cout<<R1<<endl;
-	//cout<<R2<<endl;
+	cout<<Tx<<endl;
+	cout<<R1<<endl;
+	cout<<R2<<endl;
 	vector<pair<MatrixXd,MatrixXd> > result;
 
 	MatrixXd Ty=transitionFromCrossMatrix(Tx);
@@ -308,3 +308,39 @@ MatrixXd bestPoint(const MatrixXd& p, const MatrixXd& u)
 	return result;
 
 }
+
+double length(const MatrixXd& a)
+{
+	return sqrt((a*a.transpose())(0,0));
+}
+double angleBetween(const MatrixXd& a,const MatrixXd& b)
+{
+	return acos((a*b.transpose())(0,0)/length(a)/length(b));
+}
+
+pair<MatrixXd,vector<bool> > bestPoints(const MatrixXd& spnts1,const MatrixXd& spnts2,const vector<MatrixXd>& transitions,const vector<MatrixXd>& rotations)
+{
+	assert(spnts1.rows()==spnts2.rows());
+
+	MatrixXd points(spnts1.rows(),3);
+	vector<bool> goodlabel(spnts1.rows(),false);
+
+	MatrixXd curP(2,3);
+	curP.row(0)=transitions[0];
+	curP.row(1)=transitions[1];
+	for (int i = 0; i < spnts1.rows(); i++)
+	{
+		
+		MatrixXd curU(2,3);
+		curU.row(0)=(rotations[0]*spnts1.row(i).transpose()).transpose();		
+		curU.row(1)=(rotations[1]*spnts2.row(i).transpose()).transpose();
+		points.row(i)=bestPoint(curP,curU);
+
+		if(angleBetween(points.row(i)-curP.row(0),curU.row(0))<constrain_on_goodPoint && angleBetween(points.row(i)-curP.row(1),curU.row(1)))
+			goodlabel[i]=true;
+
+	}
+
+	return make_pair(points,goodlabel);
+}
+

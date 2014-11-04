@@ -146,6 +146,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\FileIO\FileIO.cpp" />
+    <ClCompile Include="levenbergMarquardt.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="sphericalStructureFromMotion.cpp" />
   </ItemGroup>

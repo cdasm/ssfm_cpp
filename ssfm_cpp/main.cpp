@@ -41,6 +41,13 @@ int main_()
 
 int main()
 {
+
+	cout<<MatrixXd::Identity(3,3)<<endl;
+	cout<<acos(-0.5)<<endl;
+	cout<<acos(0)<<endl;
+	cout<<acos(1)<<endl;
+	
+
 	main_();
 	
 	_chdir("D:\\agood");
@@ -58,10 +65,9 @@ int main()
 
 	vector<vector<double> > transitions(features.size(),vector<double>(3,0.0));
 
-	vector<vector<double> > eyeI(3,vector<double>(3,0));
-	eyeI[0][0]=1;eyeI[1][1]=1;eyeI[2][2]=1;
 
-	vector<vector<vector<double> > > rotations(features.size(),eyeI);
+
+	vector<vector<double > > rotations(features.size(),vector<double>(3,0));
 
 	vector<vector<double> > reconstructedPoints(trajectories.first.size(),vector<double>(3,0.0));
 	
