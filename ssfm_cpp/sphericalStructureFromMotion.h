@@ -103,29 +103,10 @@ auto geometricReconstructionFrom2Frames(const vector<vector<T> >& pnts1,const ve
 	
 	for (int i = 0; i < points.size(); i++)
 	{
-		//a,&b,&c,&d,&e,&f;
-		//double &a=sphericalPoints1[i][0];
-		//double &b=sphericalPoints1[i][1];
-		//double &c=sphericalPoints1[i][2];
-		//double &d=sphericalPoints2[i][0];
-		//double &e=sphericalPoints2[i][1];
-		//double &f=sphericalPoints2[i][2];/
 
 		MatrixXd tob=sphericalPoints1.row(i).transpose()*sphericalPoints2.row(i);
 
 		observation.row(i)=convert(tob);
-		/*
-		observation(i,0) = a*d;
-		observation(i,1) = b*d;
-		observation(i,2) = c*d;
-		observation(i,3) = a*e;
-		observation(i,4) = b*e;
-		observation(i,5) = c*e;
-		observation(i,6) = a*f;
-		observation(i,7) = b*f;
-		observation(i,8) = c*f;
-		*/
-
 	}
 
 	JacobiSVD<decltype(observation)> svd(observation, Eigen::ComputeFullU |
@@ -156,6 +137,19 @@ auto geometricReconstructionFrom2Frames(const vector<vector<T> >& pnts1,const ve
 	
 	vector<pair<MatrixXd,vector<bool> > > bestPointCandidates(transtionAndRotations.size());
 
+	auto countBool=[](const vector<bool>& toc)->int
+	{
+		int sum=0;
+		for(auto s:toc)
+			if(s)
+				++sum;
+
+		return sum;
+	};
+
+	int bestIndex;
+	int bestCount;
+	vector<int> goodPointCount(transtionAndRotations.size(),0);
 	for (int i = 0; i < transtionAndRotations.size(); i++)
 	{
 		vector<MatrixXd> trans(2,MatrixXd::Zero(1,3));
@@ -163,8 +157,39 @@ auto geometricReconstructionFrom2Frames(const vector<vector<T> >& pnts1,const ve
 		vector<MatrixXd> rots(2,MatrixXd::Identity(3,3));
 		rots[1]=transtionAndRotations[i].second;
 		bestPointCandidates[i]=bestPoints(sphericalPoints1,sphericalPoints2,trans,rots);
+		goodPointCount[i]=countBool(bestPointCandidates[i].second);
+
+		if(i==0)
+		{
+			bestIndex=i;
+			bestCount=goodPointCount[i];
+		}
+		else
+		{
+			if(goodPointCount[i]>bestCount)
+			{
+				bestIndex=i;
+				bestCount=goodPointCount[i];
+			}
+		}
+
 	}
+
+	bestIndex=3;
+	cout<<"the best index:"<<bestIndex<<endl;
+	cout<<"the best transition:\n"<<transtionAndRotations[bestIndex].first <<endl;
+	cout<<"the best rotation:\n"<<transtionAndRotations[bestIndex].second<<endl;
+
+	bestIndex=6;
+	cout<<"the best index:"<<bestIndex<<endl;
+	cout<<"the best transition:\n"<<transtionAndRotations[bestIndex].first <<endl;
+	cout<<"the best rotation:\n"<<transtionAndRotations[bestIndex].second<<endl;
+
+
 	//cout<<observation;
 	return make_pair(points,errors);
 
 }
+
+
+MatrixXd bestPoint(const MatrixXd& p, const MatrixXd& u);

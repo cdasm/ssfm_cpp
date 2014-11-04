@@ -169,6 +169,68 @@ MatrixXd rotationThomasonPara(const MatrixXd& mtr)
 	return result;
 }
 
+MatrixXd transitionFrom2Para(const MatrixXd& inp)
+{
+	double a,b;
+	a=inp(0,0) ;
+	b=inp(0,1) ;
+
+	MatrixXd A0(1,3);
+	double t2 ;
+	t2 = cos(a);
+	A0(0,0) = t2*cos(b);
+	A0(0,1) = t2*sin(b);
+	A0(0,2) = sin(a);
+	return A0;
+}
+
+MatrixXd transition2Para(const MatrixXd& inp)
+{
+	double t1,t2,t3;
+	t1=inp(0,0);
+	t2=inp(0,1);
+	t3=inp(0,2);
+	double a,b;
+
+	b=atan2(t2,t1);
+	a=atan2(t3,sqrt(t1*t1+t2*t2));
+	MatrixXd A0(1,2);
+	A0(0,0)=a;
+	A0(0,1)=b;
+	return A0;
+}
+
+double distanceBetweenPointLine(const MatrixXd&x,const MatrixXd&p,const MatrixXd& u)
+{
+	double x1,x2,x3,p1,p2,p3,u1,u2,u3;
+	x1=x(0,0);
+	x2=x(0,1);
+	x3=x(0,2);
+	p1=p(0,0);
+	p2=p(0,1);
+	p3=p(0,2);
+	u1=u(0,0);
+	u2=u(0,1);
+	u3=u(0,2);
+	double t3 ,t4 ,t5 ,t6 ,t7 ,t8 ,t9 ,t10 ,t11 ,t12 ,t13 ,t14 ,t2 ,t15 ,t16 ,t0 ;
+	t3 = p1-x1;
+	t4 = t3*u1;
+	t5 = p2-x2;
+	t6 = t5*u2;
+	t7 = p3-x3;
+	t8 = t7*u3;
+	t9 = t4+t6+t8;
+	t10 = u1*u1;
+	t11 = u2*u2;
+	t12 = u3*u3;
+	t13 = t10+t11+t12;
+	t14 = 1.0/t13;
+	t2 = -p1+x1+t9*t14*u1;
+	t15 = -p2+x2+t9*t14*u2;
+	t16 = -p3+x3+t9*t14*u3;
+	t0 = t2*t2+t15*t15+t16*t16;
+	return t0;
+}
 MatrixXd transitionFromCrossMatrix(const MatrixXd& crossM)
 {
 	MatrixXd result=MatrixXd::Zero(1,3);
@@ -318,6 +380,19 @@ double angleBetween(const MatrixXd& a,const MatrixXd& b)
 	return acos((a*b.transpose())(0,0)/length(a)/length(b));
 }
 
+
+
+bool pointBeforeCamera(const MatrixXd&x,const MatrixXd&p,const MatrixXd& u)
+{
+	MatrixXd tx=x-p;
+
+	auto core=[](double a,double b)->bool
+	{
+		return (a*b)>0 && abs(a)>abs(b);
+	};
+	return core(tx(0,0),u(0,0)) && core(tx(0,1),u(0,1)) && core(tx(0,2),u(0,2));
+}
+
 pair<MatrixXd,vector<bool> > bestPoints(const MatrixXd& spnts1,const MatrixXd& spnts2,const vector<MatrixXd>& transitions,const vector<MatrixXd>& rotations)
 {
 	assert(spnts1.rows()==spnts2.rows());
@@ -336,9 +411,17 @@ pair<MatrixXd,vector<bool> > bestPoints(const MatrixXd& spnts1,const MatrixXd& s
 		curU.row(1)=(rotations[1]*spnts2.row(i).transpose()).transpose();
 		points.row(i)=bestPoint(curP,curU);
 
-		if(angleBetween(points.row(i)-curP.row(0),curU.row(0))<constrain_on_goodPoint && angleBetween(points.row(i)-curP.row(1),curU.row(1)))
+	/*	if(angleBetween(points.row(i)-curP.row(0),curU.row(0))<constrain_on_goodPoint && angleBetween(points.row(i)-curP.row(1),curU.row(1))<constrain_on_goodPoint )
+		{
+	
 			goodlabel[i]=true;
+		}*/
 
+		if(pointBeforeCamera(points.row(i),curP.row(0),curU.row(0)) && pointBeforeCamera(points.row(i),curP.row(1),curU.row(1)))
+		{
+	
+			goodlabel[i]=true;
+		}
 	}
 
 	return make_pair(points,goodlabel);

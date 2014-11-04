@@ -34,13 +34,23 @@ int main_()
 	cout<<"v*v'=\n"<<v*v.transpose()<<endl;
 	cout<<"v'*v=\n"<<v.transpose()*v<<endl;
 
-	getchar();
+	//getchar();
 	return 0;
 }
 
 
 int main()
 {
+
+	MatrixXd p(2,3);
+	MatrixXd u(2,3);
+
+	p<<0,0,0,1,1,1;
+	u<<2,4,5,3,2,1;
+
+	auto pnt=bestPoint(p,u);
+
+	cout<<pnt<<endl;
 
 	cout<<MatrixXd::Identity(3,3)<<endl;
 	cout<<acos(-0.5)<<endl;
