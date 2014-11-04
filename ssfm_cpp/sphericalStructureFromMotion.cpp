@@ -116,20 +116,29 @@ MatrixXd rotationThomason(const MatrixXd& para)
 	a=para(0,0);
 	b=para(0,1);
 	c=para(0,2);
-	MatrixXd rot=MatrixXd::Zero(3,3);
-	double r=(a*a+b*b+c*c+4.0);
+	MatrixXd A0=MatrixXd::Zero(3,3);
+	double t2 ,t3 ,t4 ,t5 ,t6 ,t7 ,t8 ,t9 ,t10 ;
+	t2 = a*a;
+	t3 = b*b;
+	t4 = c*c;
+	t5 = t2+t3+t4+4.0;
+	t6 = 1.0/t5;
+	t7 = c*2.0;
+	t8 = b*2.0;
+	t9 = a*c;
+	t10 = a*2.0;
+	A0(0,0) = t6*(t2*2.0+8.0)-1.0;
+	A0(0,1) = t6*(t7-a*b)*-2.0;
+	A0(0,2) = t6*(t8+t9)*2.0;
+	A0(1,0) = t6*(t7+a*b)*2.0;
+	A0(1,1) = t6*(t3*2.0+8.0)-1.0;
+	A0(1,2) = t6*(t10-b*c)*-2.0;
+	A0(2,0) = t6*(t8-t9)*-2.0;
+	A0(2,1) = t6*(t10+b*c)*2.0;
+	A0(2,2) = t6*(t4*2.0+8.0)-1.0;
 
-	rot(0,0) = ((a*a)*2.0+8.0)/r-1.0;
-	rot(0,1) = (c*-4.0+a*b*2.0)/r;
-	rot(0,2) = (b*4.0+a*c*2.0)/r;
-	rot(1,0) = (c*4.0+a*b*2.0)/r;
-	rot(1,1) = ((b*b)*2.0+8.0)/r-1.0;
-	rot(1,2) = (a*-4.0+b*c*2.0)/r;
-	rot(2,0) = (b*-4.0+a*c*2.0)/r;
-	rot(2,1) = (a*4.0+b*c*2.0)/r;
-	rot(2,2) = ((c*c)*2.0+8.0)/r-1.0;
 
-	return rot;
+	return A0;
 }
 
 MatrixXd rotationThomasonPara(const MatrixXd& mtr)
@@ -216,22 +225,35 @@ vector<pair<MatrixXd,MatrixXd> > transitionAndRotationFromEssential(const Matrix
 
 MatrixXd bestPointCoefficient(double a,double b,double c,double d,double e,double f)
 {
-	MatrixXd re=MatrixXd::Zero(3,4);
+	MatrixXd A0=MatrixXd::Zero(3,4);
 
-	double r=d*d+e*e+f*f;
-	re(0,0) = ((d*d)*-2.0)/(r)+2.0;
-	re(0,1) = (d*e*-2.0)/(r);
-	re(0,2) = (d*f*-2.0)/(r);
-	re(0,3) = (d*(b*e*2.0+c*f*2.0)-a*(e*e+f*f)*2.0)/(r);
-	re(1,0) = (d*e*-2.0)/(r);
-	re(1,1) = ((e*e)*-2.0)/(r)+2.0;
-	re(1,2) = (e*f*-2.0)/(r);
-	re(1,3) = b*-2.0+(e*(a*d+b*e+c*f)*2.0)/(r);
-	re(2,0) = (d*f*-2.0)/(r);
-	re(2,1) = (e*f*-2.0)/(r);
-	re(2,2) = ((f*f)*-2.0)/(r)+2.0;
-	re(2,3) = c*-2.0+(f*(a*d+b*e+c*f)*2.0)/(r);
-	return re;
+	double t2 ,t3 ,t4 ,t5 ,t6 ,t7 ,t8 ,t9 ,t10 ,t11 ,t12 ,t13 ;
+	t2 = e*e;
+	t3 = f*f;
+	t4 = d*d;
+	t5 = t2+t3+t4;
+	t6 = 1.0/t5;
+	t7 = t3*2.0;
+	t8 = t4*2.0;
+	t9 = t2*2.0;
+	t10 = a*d;
+	t11 = b*e;
+	t12 = c*f;
+	t13 = t10+t11+t12;
+	A0(0,0) = t6*(t7+t9);
+	A0(0,1) = d*e*t6*-2.0;
+	A0(0,2) = d*f*t6*-2.0;
+	A0(0,3) = -t6*(a*(t2+t3)*2.0-d*(b*e*2.0+c*f*2.0));
+	A0(1,0) = d*e*t6*-2.0;
+	A0(1,1) = t6*(t7+t8);
+	A0(1,2) = e*f*t6*-2.0;
+	A0(1,3) = b*-2.0+e*t6*t13*2.0;
+	A0(2,0) = d*f*t6*-2.0;
+	A0(2,1) = e*f*t6*-2.0;
+	A0(2,2) = t6*(t8+t9);
+	A0(2,3) = c*-2.0+f*t6*t13*2.0;
+
+	return A0;
 }
 
 MatrixXd bestPoint(const MatrixXd& p, const MatrixXd& u)
@@ -260,24 +282,24 @@ MatrixXd bestPoint(const MatrixXd& p, const MatrixXd& u)
 
 	double a,b,c,d,e,f,g,h,i,j,k,l;
 
-	a	=	coefficients(0,0)	;
-	b	=	coefficients(0,1)	;
-	c	=	coefficients(0,2)	;
-	d	=	coefficients(0,3)	;
-	e	=	coefficients(1,0)	;
-	f	=	coefficients(1,1)	;
-	g	=	coefficients(1,2)	;
-	h	=	coefficients(1,3)	;
-	i	=	coefficients(2,0)	;
-	j	=	coefficients(2,1)	;
-	k	=	coefficients(2,2)	;
-	l	=	coefficients(2,3)	;
+	a	=	coefficients(0,0);
+	b	=	coefficients(0,1);
+	c	=	coefficients(0,2);
+	d	=	coefficients(0,3);
+	e	=	coefficients(1,0);
+	f	=	coefficients(1,1);
+	g	=	coefficients(1,2);
+	h	=	coefficients(1,3);
+	i	=	coefficients(2,0);
+	j	=	coefficients(2,1);
+	k	=	coefficients(2,2);
+	l	=	coefficients(2,3);
 
 	double x,y,z;
-	double r=(a*f*k - a*g*j - b*e*k + b*g*i + c*e*j - c*f*i);
-	x=-(b*g*l - b*h*k - c*f*l + c*h*j + d*f*k - d*g*j)/r;
-	y=(a*g*l - a*h*k - c*e*l + c*h*i + d*e*k - d*g*i)/r;
-	z=-(a*f*l - a*h*j - b*e*l + b*h*i + d*e*j - d*f*i)/r;
+	double r=1.0/(a*f*k - a*g*j - b*e*k + b*g*i + c*e*j - c*f*i);
+	x=-(b*g*l - b*h*k - c*f*l + c*h*j + d*f*k - d*g*j)*r;
+	y=(a*g*l - a*h*k - c*e*l + c*h*i + d*e*k - d*g*i)*r;
+	z=-(a*f*l - a*h*j - b*e*l + b*h*i + d*e*j - d*f*i)*r;
 
 	MatrixXd result=MatrixXd(1,3);
 	result(0,0)=x;
