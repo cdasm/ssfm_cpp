@@ -56,6 +56,10 @@ vector<pair<MatrixXd,MatrixXd> > transitionAndRotationFromEssential(const Matrix
 pair<MatrixXd,vector<bool> > bestPoints(const MatrixXd& spnts1,const MatrixXd& spnts2,const vector<MatrixXd>& transitions,const vector<MatrixXd>& rotations);
 
 
+
+
+pair<vector<vector<double> >,vector<double> > geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const MatrixXd& sphericalPoints2,vector<double>& transition,vector<double >& rotation);
+
 template<class T>
 auto geometricReconstructionFrom2Frames(const vector<vector<T> >& pnts1,const vector<vector<T> >& pnts2,vector<double>& transition,vector<double >& rotation,const vector<T>& imageSize)->pair<vector<vector<double> >,vector<double> >
 {
@@ -69,126 +73,8 @@ auto geometricReconstructionFrom2Frames(const vector<vector<T> >& pnts1,const ve
 		sphericalPoints1.row(i)=imageCordinate2Phere(pnts1[i],imageSize);
 		sphericalPoints2.row(i)=imageCordinate2Phere(pnts2[i],imageSize);
 	}
-
-	vector<vector<double> > points(pnts1.size(),vector<double>(3,0.0));
-	vector<double> errors(pnts1.size(),-1);
-
-
-	MatrixXd observation(points.size(),9);
-
-	auto convert=[](const MatrixXd& from)->MatrixXd
-	{
-		MatrixXd A0(1,9);
-		double a,b,c,d,e,f,g,h,i;
-		a=from(0,0) ;
-		b=from(0,1) ;
-		c=from(0,2) ;
-		d=from(1,0) ;
-		e=from(1,1) ;
-		f=from(1,2) ;
-		g=from(2,0) ;
-		h=from(2,1) ;
-		i=from(2,2) ;
-		A0(0,0) = a;
-		A0(0,1) = d;
-		A0(0,2) = g;
-		A0(0,3) = b;
-		A0(0,4) = e;
-		A0(0,5) = h;
-		A0(0,6) = c;
-		A0(0,7) = f;
-		A0(0,8) = i;
-		return A0;
-	};
+	return geometricReconstructionFrom2Frames(sphericalPoints1,sphericalPoints2,transition,rotation);
 	
-	for (int i = 0; i < points.size(); i++)
-	{
-
-		MatrixXd tob=sphericalPoints1.row(i).transpose()*sphericalPoints2.row(i);
-
-		observation.row(i)=convert(tob);
-	}
-
-	JacobiSVD<decltype(observation)> svd(observation, Eigen::ComputeFullU |
-                                        Eigen::ComputeFullV);
-	std::cout << "matrix V" << std::endl << svd.matrixV() << std::endl;
-
-	vector<MatrixXd> essentialMatrixes(2,MatrixXd::Zero(3,3));
-
-	auto matrixV=svd.matrixV();
-
-	for (int i = 0; i < 2; i++)
-	{
-		for (int j = 0; j < 3; j++)
-		{
-			for (int k = 0; k < 3; k++)
-			{
-				essentialMatrixes[i](j,k)=matrixV (j*3+k,7+i);
-			}
-		}
-	}
-
-	vector<pair<MatrixXd,MatrixXd> > transtionAndRotations;
-	for (int i = 0; i < 2; i++)
-	{
-		auto ttar=transitionAndRotationFromEssential(essentialMatrixes[i]);
-		transtionAndRotations.insert(transtionAndRotations.end(),ttar.begin(),ttar.end());
-	}
-	
-	vector<pair<MatrixXd,vector<bool> > > bestPointCandidates(transtionAndRotations.size());
-
-	auto countBool=[](const vector<bool>& toc)->int
-	{
-		int sum=0;
-		for(auto s:toc)
-			if(s)
-				++sum;
-
-		return sum;
-	};
-
-	int bestIndex;
-	int bestCount;
-	vector<int> goodPointCount(transtionAndRotations.size(),0);
-	for (int i = 0; i < transtionAndRotations.size(); i++)
-	{
-		vector<MatrixXd> trans(2,MatrixXd::Zero(1,3));
-		trans[1]=transtionAndRotations[i].first;
-		vector<MatrixXd> rots(2,MatrixXd::Identity(3,3));
-		rots[1]=transtionAndRotations[i].second;
-		bestPointCandidates[i]=bestPoints(sphericalPoints1,sphericalPoints2,trans,rots);
-		goodPointCount[i]=countBool(bestPointCandidates[i].second);
-
-		if(i==0)
-		{
-			bestIndex=i;
-			bestCount=goodPointCount[i];
-		}
-		else
-		{
-			if(goodPointCount[i]>bestCount)
-			{
-				bestIndex=i;
-				bestCount=goodPointCount[i];
-			}
-		}
-
-	}
-
-	bestIndex=3;
-	cout<<"the best index:"<<bestIndex<<endl;
-	cout<<"the best transition:\n"<<transtionAndRotations[bestIndex].first <<endl;
-	cout<<"the best rotation:\n"<<transtionAndRotations[bestIndex].second<<endl;
-
-	bestIndex=6;
-	cout<<"the best index:"<<bestIndex<<endl;
-	cout<<"the best transition:\n"<<transtionAndRotations[bestIndex].first <<endl;
-	cout<<"the best rotation:\n"<<transtionAndRotations[bestIndex].second<<endl;
-
-
-	//cout<<observation;
-	return make_pair(points,errors);
-
 }
 
 
