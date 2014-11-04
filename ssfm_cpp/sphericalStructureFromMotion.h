@@ -58,7 +58,7 @@ pair<MatrixXd,vector<bool> > bestPoints(const MatrixXd& spnts1,const MatrixXd& s
 
 
 
-pair<vector<vector<double> >,vector<double> > geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const MatrixXd& sphericalPoints2,vector<double>& transition,vector<double >& rotation);
+auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const MatrixXd& sphericalPoints2,vector<double>& transition,vector<double >& rotation)->pair<vector<vector<double> >,vector<double> >;
 
 template<class T>
 auto geometricReconstructionFrom2Frames(const vector<vector<T> >& pnts1,const vector<vector<T> >& pnts2,vector<double>& transition,vector<double >& rotation,const vector<T>& imageSize)->pair<vector<vector<double> >,vector<double> >

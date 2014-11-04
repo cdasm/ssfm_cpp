@@ -439,7 +439,7 @@ pair<MatrixXd,vector<bool> > bestPoints(const MatrixXd& spnts1,const MatrixXd& s
 
 
 
-pair<vector<vector<double> >,vector<double> > geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const MatrixXd& sphericalPoints2,vector<double>& transition,vector<double >& rotation)
+auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const MatrixXd& sphericalPoints2,vector<double>& transition,vector<double >& rotation)->pair<vector<vector<double> >,vector<double> >
 {
 	vector<vector<double> > points(sphericalPoints1.rows(),vector<double>(3,0.0));
 	vector<double> errors(sphericalPoints1.rows(),-1);
@@ -556,10 +556,7 @@ pair<vector<vector<double> >,vector<double> > geometricReconstructionFrom2Frames
 	cout<<"the best transition:\n"<<transtionAndRotations[bestIndex].first <<endl;
 	cout<<"the best rotation:\n"<<transtionAndRotations[bestIndex].second<<endl;
 
-	bestIndex=6;
-	cout<<"the best index:"<<bestIndex<<endl;
-	cout<<"the best transition:\n"<<transtionAndRotations[bestIndex].first <<endl;
-	cout<<"the best rotation:\n"<<transtionAndRotations[bestIndex].second<<endl;
+	
 
 
 	//cout<<observation;
