@@ -106,10 +106,17 @@ void testTwoFrame()
 	,0.5811,0.6987,0.4173
 	,0.5485,0.5722,0.6097;
 
-	vector<double> tt(3,0);
-	vector<double> rr(3,0);
+	MatrixXd tt(1,3);
+	MatrixXd rr(1,3);
 
-	geometricReconstructionFrom2Frames(sp1,sp2,tt,rr);
+	vector<int> ind(30);
+	for (int i = 0; i < 30; i++)
+	{
+		ind[i]=i;
+	}
+
+
+	geometricReconstructionFrom2Frames(sp1,ind,sp2,ind,tt,rr);
 }
 
 void testJacobian()
@@ -169,50 +176,11 @@ int main()
 	main_();
 	
 	_chdir("D:\\agood");
-
-	vector<vector<vector<int> > > features;
-	vector<map<int,int>> correspondences;
-
-	vector<unordered_set<int> > contain;
-
-	vector<vector<int> > featureIsPoint;
-
-	auto trajectories=collectFromPairwiseMatching("orb.lst","match.lst",features,correspondences,contain,featureIsPoint);
-
-
-
-	vector<vector<double> > transitions(features.size(),vector<double>(3,0.0));
-
-
-
-	vector<vector<double > > rotations(features.size(),vector<double>(3,0));
-
-	vector<vector<double> > reconstructedPoints(trajectories.first.size(),vector<double>(3,0.0));
-	
-	vector<bool> alreadyReconstructed(trajectories.first.size(),false);
-
-	vector<vector<int> > points1(correspondences[0].size()),points2(correspondences[0].size());
-
-	vector<int> index(correspondences[0].size());
-
-	int count=0;
-	for ( auto&k:correspondences[0])
-	{
-		points1[count]=features[0][k.first];
-		points2[count]=features[1][k.second];
-		index[count]=featureIsPoint[0][k.first];
-		++count;
-	}
-
-	vector<int> imageSize(2);
-	imageSize[0]=512;imageSize[1]=256;
-
-	geometricReconstructionFrom2Frames(points1,points2,transitions[1],rotations[1],imageSize);
-	//set_intersection(contain[0].begin(),contain[0].end(),contain[1].begin(),contain[1].end(),back_inserter(pointOnFirst2Frames));
+//set_intersection(contain[0].begin(),contain[0].end(),contain[1].begin(),contain[1].end(),back_inserter(pointOnFirst2Frames));
 	
 	//auto pointOnFirst2Frames=set_intersect(contain[0],contain[1]);
 
-
+	threeDimensionReconstruction("orb.lst","match.lst");
 
 	return 0;
 

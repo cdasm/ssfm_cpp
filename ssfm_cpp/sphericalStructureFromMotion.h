@@ -13,6 +13,7 @@
 #include <iostream>
 #include <assert.h>
 #include <math.h>
+#include <tuple>
 
 using namespace Eigen;
 
@@ -53,13 +54,19 @@ enum cameraType{_static,_unitLength,_ordinary};
 vector<pair<MatrixXd,MatrixXd> > transitionAndRotationFromEssential(const MatrixXd& essential);
 
 
-pair<MatrixXd,vector<double> > bestPoints(const MatrixXd& spnts1,const MatrixXd& spnts2,const vector<MatrixXd>& transitions,const vector<MatrixXd>& rotations);
+pair<MatrixXd,vector<double> > bestPoints(const MatrixXd& spnts1,const vector<int>& ind1,const MatrixXd& spnts2,const vector<int>& ind2,const vector<MatrixXd>& transitions,const vector<MatrixXd>& rotations);
 
 
 
 
-auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const MatrixXd& sphericalPoints2,vector<double>& transition,vector<double >& rotation)->pair<MatrixXd,vector<double> >;
+//auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const vector<int>& ind1,const MatrixXd& sphericalPoints2,const vector<int>& ind2,vector<double>& transition,vector<double >& rotation)->pair<MatrixXd,vector<double> >;
+auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const vector<int>& ind1,const MatrixXd& sphericalPoints2,const vector<int>& ind2,MatrixXd& transition,MatrixXd& rotation)->pair<MatrixXd,vector<double> >;
 
+
+auto threeDimensionReconstruction(const string& featureFileName,const string& matchFileName)->tuple<MatrixXd,MatrixXd,MatrixXd>;
+
+
+/*
 template<class T>
 auto geometricReconstructionFrom2Frames(const vector<vector<T> >& pnts1,const vector<vector<T> >& pnts2,vector<double>& transition,vector<double >& rotation,const vector<int>& imageSize)->pair<MatrixXd,vector<double> >
 {
@@ -75,7 +82,7 @@ auto geometricReconstructionFrom2Frames(const vector<vector<T> >& pnts1,const ve
 	}
 	return geometricReconstructionFrom2Frames(sphericalPoints1,sphericalPoints2,transition,rotation);
 	
-}
+}*/
 
 
 MatrixXd bestPoint(const MatrixXd& p, const MatrixXd& u);

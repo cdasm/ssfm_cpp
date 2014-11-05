@@ -21,7 +21,8 @@ auto incrementalTrajectoryDetect(const vector<vector<Pnt> >& features, vector<ma
 
 	for (int i = 0; i < features.size()-1; i++)
 	{
-		cout<<"processing frame " <<i<<endl;
+		if(i%30==0)
+			cout<<"processing frame " <<i<<endl;
 		for (int j = 0; j < markers[i].size(); j++)
 		{
 			if(!markers[i][j])
@@ -333,6 +334,7 @@ MatrixXd bestPoint(const MatrixXd& p, const MatrixXd& u)
 	assert(p.cols()==3);
 	assert(u.cols()==3);
 	assert(p.rows()==u.rows());
+	assert(p.rows()>1);
 
 	for (int i = 0; i < p.rows(); i++)
 	{
@@ -383,6 +385,7 @@ double length(const MatrixXd& a)
 {
 	return sqrt((a*a.transpose())(0,0));
 }
+
 double angleBetween(const MatrixXd& a,const MatrixXd& b)
 {
 	return acos((a*b.transpose())(0,0)/length(a)/length(b));
@@ -401,22 +404,22 @@ bool pointBeforeCamera(const MatrixXd&x,const MatrixXd&p,const MatrixXd& u)
 	return core(tx(0,0),u(0,0)) && core(tx(0,1),u(0,1)) && core(tx(0,2),u(0,2));
 }
 
-pair<MatrixXd,vector<double> > bestPoints(const MatrixXd& spnts1,const MatrixXd& spnts2,const vector<MatrixXd>& transitions,const vector<MatrixXd>& rotations)
+pair<MatrixXd,vector<double> > bestPoints(const MatrixXd& spnts1,const vector<int>& ind1,const MatrixXd& spnts2,const vector<int>& ind2,const vector<MatrixXd>& transitions,const vector<MatrixXd>& rotations)
 {
-	assert(spnts1.rows()==spnts2.rows());
+	assert(ind1.size()==ind2.size());
 
-	MatrixXd points(spnts1.rows(),3);
-	vector<double> error(spnts1.rows(),-1);
+	MatrixXd points(ind1.size(),3);
+	vector<double> error(ind1.size(),-1);
 
 	MatrixXd curP(2,3);
 	curP.row(0)=transitions[0];
 	curP.row(1)=transitions[1];
-	for (int i = 0; i < spnts1.rows(); i++)
+	for (int i = 0; i < ind1.size(); i++)
 	{
 		
 		MatrixXd curU(2,3);
-		curU.row(0)=(rotations[0]*spnts1.row(i).transpose()).transpose();		
-		curU.row(1)=(rotations[1]*spnts2.row(i).transpose()).transpose();
+		curU.row(0)=(rotations[0]*spnts1.row(ind1[i]).transpose()).transpose();		
+		curU.row(1)=(rotations[1]*spnts2.row(ind2[i]).transpose()).transpose();
 		points.row(i)=bestPoint(curP,curU);
 
 	/*	if(angleBetween(points.row(i)-curP.row(0),curU.row(0))<constrain_on_goodPoint && angleBetween(points.row(i)-curP.row(1),curU.row(1))<constrain_on_goodPoint )
@@ -439,14 +442,14 @@ pair<MatrixXd,vector<double> > bestPoints(const MatrixXd& spnts1,const MatrixXd&
 
 
 
-
-auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const MatrixXd& sphericalPoints2,vector<double>& transition,vector<double >& rotation)->pair<MatrixXd ,vector<double> >
+auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const vector<int>& ind1,const MatrixXd& sphericalPoints2,const vector<int>& ind2,MatrixXd& transition,MatrixXd& rotation)->pair<MatrixXd,vector<double> >
+//auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const MatrixXd& sphericalPoints2,vector<double>& transition,vector<double >& rotation)->pair<MatrixXd ,vector<double> >
 {
 //	vector<vector<double> > points(sphericalPoints1.rows(),vector<double>(3,0.0));
 //	vector<double> errors(sphericalPoints1.rows(),-1);
 
-
-	MatrixXd observation(sphericalPoints1.rows(),9);
+	assert(ind1.size()==ind2.size());
+	MatrixXd observation(ind1.size(),9);
 
 	auto convert=[](const MatrixXd& from)->MatrixXd
 	{
@@ -473,10 +476,10 @@ auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const M
 		return A0;
 	};
 	
-	for (int i = 0; i < sphericalPoints1.rows(); i++)
+	for (int i = 0; i < observation.rows(); i++)
 	{
 
-		MatrixXd tob=sphericalPoints1.row(i).transpose()*sphericalPoints2.row(i);
+		MatrixXd tob=sphericalPoints1.row(ind1[i]).transpose()*sphericalPoints2.row(ind2[i]);
 
 		observation.row(i)=convert(tob);
 	}
@@ -533,7 +536,7 @@ auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const M
 		trans[1]=transtionAndRotations[i].first;
 		vector<MatrixXd> rots(2,MatrixXd::Identity(3,3));
 		rots[1]=transtionAndRotations[i].second;
-		bestPointCandidates[i]=bestPoints(sphericalPoints1,sphericalPoints2,trans,rots);
+		bestPointCandidates[i]=bestPoints(sphericalPoints1,ind1,sphericalPoints2,ind2,trans,rots);
 		goodPointCount[i]=countDouble(bestPointCandidates[i].second);
 
 		if(i==0)
@@ -551,6 +554,8 @@ auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const M
 		}
 
 	}
+	transition=transtionAndRotations[bestIndex].first;
+	rotation=rotationThomasonPara (transtionAndRotations[bestIndex].second.inverse());
 
 //	bestIndex=3;
 	cout<<"the best index:"<<bestIndex<<endl;
@@ -564,6 +569,80 @@ auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const M
 	return bestPointCandidates[bestIndex];
 
 }
+
+
+
+
+auto threeDimensionReconstruction(const string& featureFileName,const string& matchFileName)->tuple<MatrixXd,MatrixXd,MatrixXd>
+{
+	
+	vector<vector<vector<int> > > features;
+	vector<map<int,int>> correspondences;
+	vector<unordered_set<int> > contain;
+	vector<vector<int> > featureIsPoint;
+
+	auto trajectories=collectFromPairwiseMatching(featureFileName,matchFileName,features,correspondences,contain,featureIsPoint);
+
+
+	MatrixXd transitions(features.size(),3);
+
+	MatrixXd rotations(features.size(),3);
+
+	vector<bool> alreadyEstimated(features.size(),false);
+
+	transitions.row(0)=MatrixXd::Zero(1,3);
+	rotations.row(0)=MatrixXd::Zero(1,3);
+	alreadyEstimated[0]=true;
+
+	MatrixXd reconstructedPoints(trajectories.first.size(),3);
+
+	vector<bool> alreadyReconstructed(trajectories.first.size(),false);
+
+	vector<int> imageSize(2);
+	imageSize[0]=512;imageSize[1]=256;
+
+	auto convertFeature=[&](const vector<vector<int>> &fea)->MatrixXd
+	{
+		MatrixXd sfea(fea.size(),3);
+		for (int i = 0; i < fea.size(); i++)
+		{
+			sfea.row(i)=imageCordinate2Phere(fea[i],imageSize);
+		}
+		return sfea;
+	};
+	vector<MatrixXd> sphericalFeatures(features.size());
+	
+	for (int i = 0; i < sphericalFeatures.size(); i++)
+	{
+		sphericalFeatures[i]=convertFeature(features[i]);
+	}
+
+//	vector<vector<int> > points1(correspondences[0].size()),points2(correspondences[0].size());
+
+	vector<int> index(correspondences[0].size());
+
+	vector<int> ind1,ind2;
+
+	int count=0;
+	for ( auto&k:correspondences[0])
+	{
+		ind1.push_back(k.first);
+		ind2.push_back(k.second);
+//		points1[count]=features[0][];
+//		points2[count]=features[1][k.second];
+		index[count]=featureIsPoint[0][k.first];
+		++count;
+	}
+
+	MatrixXd curTransition,curRotation;
+	geometricReconstructionFrom2Frames(sphericalFeatures[0],ind1,sphericalFeatures[1],ind2,curTransition,curRotation);
+	transitions.row(1)=curTransition;
+	rotations.row(1)=curRotation;
+
+	return make_tuple(transitions,rotations,reconstructedPoints);
+	
+}
+
 
 
 
