@@ -112,9 +112,19 @@ void testTwoFrame()
 	geometricReconstructionFrom2Frames(sp1,sp2,tt,rr);
 }
 
+void testJacobian()
+{
+	MatrixXd para1(1,6);
+	para1<<1, 2, 3, 1, 1, 1;
+	MatrixXd var1(1,6);
+	var1<<3, 2, 1, 2, 1, 2;
+	cout<<functionForRotationAndTransition(para1,var1)<<endl;
+	cout<<functionForRotationAndTransition2(para1,var1)<<endl;
+}
+
 int main()
 {
-
+	testJacobian();
 	 Eigen::MatrixXf m(4,4);
 	  m <<  1, 2, 3, 4,
 			5, 6, 7, 8,
