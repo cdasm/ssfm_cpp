@@ -1,11 +1,6 @@
 #include "sphericalStructureFromMotion.h"
 
 
-
-
-
-//typedef vector<int> Pnt;
-
 template<class Pnt>
 auto incrementalTrajectoryDetect(const vector<vector<Pnt> >& features, vector<map<int,int>>& sth)-> pair<vector<pair<int,int> >,  vector<vector<int> > >
 {
@@ -558,7 +553,7 @@ auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const v
 	rotation=rotationThomasonPara (transtionAndRotations[bestIndex].second.inverse());
 
 //	bestIndex=3;
-	cout<<"the best index:"<<bestIndex<<endl;
+ 	cout<<"the best index:"<<bestIndex<<endl;
 	cout<<"the best transition:\n"<<transtionAndRotations[bestIndex].first <<endl;
 	cout<<"the best rotation:\n"<<transtionAndRotations[bestIndex].second<<endl;
 
@@ -628,16 +623,152 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 	{
 		ind1.push_back(k.first);
 		ind2.push_back(k.second);
-//		points1[count]=features[0][];
-//		points2[count]=features[1][k.second];
 		index[count]=featureIsPoint[0][k.first];
 		++count;
 	}
 
 	MatrixXd curTransition,curRotation;
-	geometricReconstructionFrom2Frames(sphericalFeatures[0],ind1,sphericalFeatures[1],ind2,curTransition,curRotation);
+	auto pointsError2Frame=geometricReconstructionFrom2Frames(sphericalFeatures[0],ind1,sphericalFeatures[1],ind2,curTransition,curRotation);
 	transitions.row(1)=curTransition;
 	rotations.row(1)=curRotation;
+	alreadyEstimated[1]=true;
+
+
+	auto setReconstructedPoints=[&reconstructedPoints,&alreadyReconstructed](const pair<MatrixXd,vector<double> >& mpointsError2Frame,const vector<int>& mindex)
+	{
+		assert(mpointsError2Frame.second.size()==mindex.size());
+
+
+		for (int i = 0; i < mpointsError2Frame.second.size(); i++)
+		{
+			if (mpointsError2Frame.second[i]>0 && mpointsError2Frame.second[i]<constrain_on_goodPoint)
+			{
+				reconstructedPoints.row(mindex[i])=mpointsError2Frame.first.row(i);
+				alreadyReconstructed[mindex[i]]=true;
+
+			}
+		}
+	};
+
+	setReconstructedPoints(pointsError2Frame,index);
+
+	auto reconstructPoints=[&](int lcameraIndex)
+	{
+		assert(lcameraIndex>=1);
+		assert(alreadyEstimated[lcameraIndex-1] && alreadyEstimated[lcameraIndex]);
+		int lCount=0;
+		vector<int> lIndex,lIndex1,lIndex2;
+		for (auto& s:correspondences[lcameraIndex-1])
+		{
+			if(!alreadyReconstructed[featureIsPoint[lcameraIndex-1][s.first]])
+			{
+				lIndex.push_back(featureIsPoint[lcameraIndex-1][s.first]);
+				lIndex1.push_back(s.first);
+				lIndex2.push_back(s.second);
+			}
+			++lCount;
+		}
+		vector<MatrixXd> ltransitions(2);
+		vector<MatrixXd> lrotations(2);
+		ltransitions[0]=transitions.row(lcameraIndex-1);
+		ltransitions[1]=transitions.row(lcameraIndex);
+
+		lrotations[0]=rotationThomason(rotations.row(lcameraIndex-1)).inverse();
+		lrotations[1]=rotationThomason(rotations.row(lcameraIndex)).inverse();
+		auto lpointsError2Frame=bestPoints(sphericalFeatures[lcameraIndex-1],lIndex1,sphericalFeatures[lcameraIndex],lIndex2,ltransitions,lrotations);
+		setReconstructedPoints(lpointsError2Frame,lIndex);
+
+	};
+	vector<funcType2> functions(2);
+	functions[0]=&functionForRotationAndTransition;
+	functions[1]=&functionForRotationAndTransitionUnitLength;
+	vector<funcType2> jacabianFunctions(4);
+	jacabianFunctions[0]=&jacobianForRotationAndTransition;
+	jacabianFunctions[1]=&jacobianForRotationAndTransitionUnitLength;
+	jacabianFunctions[2]=&jacobianForPoint;
+	jacabianFunctions[3]=&jacobianForPointUnitLength;
+
+	auto bundleAdjustment=[&](unordered_map<int,cameraType>& lbundlePara)
+	{
+		unordered_set<int> pntIndx;
+		unordered_map<int,int> staticCameras;
+		for (auto& s:lbundlePara)
+		{
+			assert(alreadyEstimated[s.first]);
+			if (s.second!=cameraType::_static)
+			{
+				for (auto&w: contain[s.first])
+				{
+					if(alreadyReconstructed[w])
+						pntIndx.insert(w);
+
+				}
+			}
+			else
+			{
+				int _t=staticCameras.size();
+				staticCameras[s.first]=_t;
+			}
+		}
+
+		MatrixXd assistantPara(staticCameras.size(),6);
+
+		
+
+		vector<vector<int> > funcDataMap;
+		vector<vector<int> > jfuncDataMap;
+
+		MatrixXd dataSet;
+
+		MatrixXd obj_vals;
+		MatrixXd intit_parameters;
+		levenbergM_advanced(dataSet,assistantPara,funcDataMap,jfuncDataMap,obj_vals,functions,jacabianFunctions,intit_parameters);
+
+
+	};
+
+	for (int cameraIndex = 2; cameraIndex < features.size(); cameraIndex++)
+	{
+		vector<int> curInd1,curInd2;
+		for (int i = 0; i < featureIsPoint[cameraIndex].size(); i++)
+		{
+			if (featureIsPoint[cameraIndex][i]>=0 && alreadyReconstructed[featureIsPoint[cameraIndex][i]])
+			{
+				curInd1.push_back(i);
+				curInd2.push_back(featureIsPoint[cameraIndex][i]);
+			}
+		}
+		auto cameraPara=estimateCameraParameter(sphericalFeatures[cameraIndex],curInd1,reconstructedPoints,ind2);
+		rotations.row(cameraIndex)=cameraPara.block(0,0,1,3);
+		transitions.row(cameraIndex)=cameraPara.block(0,3,1,3);
+		alreadyEstimated[cameraIndex]=true;
+		reconstructedPoints(cameraIndex);
+
+
+
+		//vector<cameraType> _cameraTypes(cameraIndex+1);
+
+		//vector<int> camIndx(cameraIndex+1);
+
+		unordered_map<int,cameraType> bundlePara;
+
+//		_cameraTypes[0]=cameraType::_static;
+//		_cameraTypes[1]=cameraType::_unitLength;
+//		camIndx[0]=0;
+//		camIndx[1]=1;
+
+		bundlePara[0]=cameraType::_static;
+		bundlePara[1]=cameraType::_unitLength;
+		for (int i = 2; i <=cameraIndex; i++)
+		{
+//			_cameraTypes[2]=cameraType::_ordinary;
+//			camIndx[i]=i;
+			bundlePara[i]=cameraType::_ordinary;
+		}
+		bundleAdjustment(bundlePara);
+
+	}
+
 
 	return make_tuple(transitions,rotations,reconstructedPoints);
 	
@@ -681,7 +812,7 @@ MatrixXd functionForRotationAndTransition(const MatrixXd& parameters,const Matri
 
 
 
-MatrixXd functionForRotationAndTransition2(const MatrixXd& parameters,const MatrixXd& variables2)
+MatrixXd functionForRotationAndTransitionUnitLength(const MatrixXd& parameters,const MatrixXd& variables2)
 {
 	MatrixXd variable(1,6);
 	variable.block(0,0,1,3)=variables2.block(0,0,1,3);
@@ -690,7 +821,7 @@ MatrixXd functionForRotationAndTransition2(const MatrixXd& parameters,const Matr
 	return functionForRotationAndTransition(parameters,variable);
 }
 
-MatrixXd jacobianForPoint2(const MatrixXd& parameters,const MatrixXd& variables2)
+MatrixXd jacobianForPointUnitLength(const MatrixXd& parameters,const MatrixXd& variables2)
 {
 	MatrixXd variable(1,6);
 	variable.block(0,0,1,3)=variables2.block(0,0,1,3);
@@ -735,7 +866,7 @@ MatrixXd jacobianForPoint(const MatrixXd& parameters,const MatrixXd& variables)
 	return jsym;
 }
 
-MatrixXd jacobianForRotationAndTransition2(const MatrixXd& parameters,const MatrixXd& variables)
+MatrixXd jacobianForRotationAndTransitionUnitLength(const MatrixXd& parameters,const MatrixXd& variables)
 {
 
 	double a,b,c,d,e,f,t1,t2,r1,r2,r3;
@@ -1102,41 +1233,61 @@ MatrixXd jacobianForPoint(const vector<MatrixXd>& input)
 
 
 
-MatrixXd functionForRotationAndTransition2(const vector<MatrixXd>& input)
+MatrixXd functionForRotationAndTransitionUnitLength(const vector<MatrixXd>& input)
 {
 	MatrixXd parameters(1,6);
 	parameters.block(0,0,1,3)=input[0];
 	parameters.block(0,3,1,3)=input[2];
 	MatrixXd variables=input[1];
-	return functionForRotationAndTransition2(parameters,variables);
+	return functionForRotationAndTransitionUnitLength(parameters,variables);
 }
 
-MatrixXd jacobianForRotationAndTransition2(const vector<MatrixXd>& input)
+MatrixXd jacobianForRotationAndTransitionUnitLength(const vector<MatrixXd>& input)
 {
 	MatrixXd parameters(1,6);
 	parameters.block(0,0,1,3)=input[0];
 	parameters.block(0,3,1,3)=input[2];
 	MatrixXd variables=input[1];
-	return jacobianForRotationAndTransition2(parameters,variables);
+	return jacobianForRotationAndTransitionUnitLength(parameters,variables);
 
 }
 
-MatrixXd jacobianForPoint2(const vector<MatrixXd>& input)
+MatrixXd jacobianForPointUnitLength(const vector<MatrixXd>& input)
 {
 	MatrixXd parameters(1,6);
 	parameters.block(0,0,1,3)=input[0];
 	parameters.block(0,3,1,3)=input[2];
 	MatrixXd variables=input[1];
-	return jacobianForPoint2(parameters,variables);
+	return jacobianForPointUnitLength(parameters,variables);
 
 }
 
 MatrixXd estimateCameraParameter(const MatrixXd& projPoints,const MatrixXd& points)
 {
+	assert(projPoints.rows()==points.rows());
 	MatrixXd dataset(projPoints.rows(),6);
 
 	dataset.block(0,0,projPoints.rows(),3)=projPoints;
 	dataset.block(0,3,projPoints.rows(),3)=points;
+	MatrixXd obj_vals=MatrixXd::Zero(1,projPoints.rows()*3);
+	MatrixXd para=MatrixXd::Zero(1,6);
+	return	levenbergM_simple(dataset,obj_vals,functionForRotationAndTransition,jacobianForRotationAndTransition,para);
+}
+
+
+MatrixXd estimateCameraParameter(const MatrixXd& projPoints,const vector<int>& ind1,const MatrixXd& points,const vector<int>& ind2)
+{
+	assert(ind1.size()==ind2.size());
+
+	MatrixXd dataset(ind1.size(),6);
+
+	for (int i = 0; i < ind1.size(); i++)
+	{
+		dataset.block(i,0,1,3)=projPoints.row(ind1[i]);
+		dataset.block(i,3,1,3)=points.row(ind2[i]);
+	}
+
+	
 	MatrixXd obj_vals=MatrixXd::Zero(1,projPoints.rows()*3);
 	MatrixXd para=MatrixXd::Zero(1,6);
 	return	levenbergM_simple(dataset,obj_vals,functionForRotationAndTransition,jacobianForRotationAndTransition,para);

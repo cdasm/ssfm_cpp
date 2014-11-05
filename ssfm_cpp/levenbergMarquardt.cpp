@@ -57,8 +57,13 @@ MatrixXd levenbergM_simple(MatrixXd& dataset,const MatrixXd& obj_vals,funcType f
 		{
 			lambda/=10;
 			para_est=para_lm;
+
+			if(e-e_lm<constrain_on_delta_error)
+				break;
 			e=e_lm;
 			updateJ=true;
+
+			
 		}
 		else
 		{
@@ -168,6 +173,8 @@ MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vec
 		{
 			lambda/=10;
 			para_est=para_lm;
+			if(e-e_lm<constrain_on_delta_error)
+				break;
 			e=e_lm;
 			updateJ=true;
 		}

@@ -127,11 +127,11 @@ void testJacobian()
 	MatrixXd var1(1,6);
 	var1<<3, 2, 1, 2, 1, 2;
 	cout<<functionForRotationAndTransition(para1,var1)<<endl;
-	cout<<functionForRotationAndTransition2(para1,var1)<<endl;
+	cout<<functionForRotationAndTransitionUnitLength(para1,var1)<<endl;
 	cout<<jacobianForRotationAndTransition(para1,var1)<<endl;
-	cout<<jacobianForRotationAndTransition2(para1,var1)<<endl;
+	cout<<jacobianForRotationAndTransitionUnitLength(para1,var1)<<endl;
 	cout<<jacobianForPoint(para1,var1)<<endl;
-	cout<<jacobianForPoint2(para1,var1)<<endl;
+	cout<<jacobianForPointUnitLength(para1,var1)<<endl;
 }
 
 

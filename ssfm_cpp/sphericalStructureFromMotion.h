@@ -11,6 +11,7 @@
 #include "levenbergMarquardt.h"
 
 #include <iostream>
+#include <unordered_map>
 #include <assert.h>
 #include <math.h>
 #include <tuple>
@@ -84,21 +85,22 @@ MatrixXd jacobianForRotationAndTransition(const vector<MatrixXd>& input);
 MatrixXd jacobianForPoint(const vector<MatrixXd>& input);
 
 
-MatrixXd functionForRotationAndTransition2(const MatrixXd& parameters,const MatrixXd& variables);
+MatrixXd functionForRotationAndTransitionUnitLength(const MatrixXd& parameters,const MatrixXd& variables);
 
-MatrixXd jacobianForPoint2(const MatrixXd& parameters,const MatrixXd& variables);
+MatrixXd jacobianForPointUnitLength(const MatrixXd& parameters,const MatrixXd& variables);
 
-MatrixXd jacobianForRotationAndTransition2(const MatrixXd& parameters,const MatrixXd& variables);
+MatrixXd jacobianForRotationAndTransitionUnitLength(const MatrixXd& parameters,const MatrixXd& variables);
 
-MatrixXd functionForRotationAndTransition2(const vector<MatrixXd>& input);
+MatrixXd functionForRotationAndTransitionUnitLength(const vector<MatrixXd>& input);
 
-MatrixXd jacobianForRotationAndTransition2(const vector<MatrixXd>& input);
+MatrixXd jacobianForRotationAndTransitionUnitLength(const vector<MatrixXd>& input);
 
-MatrixXd jacobianForPoint2(const vector<MatrixXd>& input);
+MatrixXd jacobianForPointUnitLength(const vector<MatrixXd>& input);
 
 
 MatrixXd estimateCameraParameter(const MatrixXd& projPoints,const MatrixXd& points);
 
+MatrixXd estimateCameraParameter(const MatrixXd& projPoints,const vector<int>& ind1,const MatrixXd& points,const vector<int>& ind2);
 
 /*
 template<class T>
