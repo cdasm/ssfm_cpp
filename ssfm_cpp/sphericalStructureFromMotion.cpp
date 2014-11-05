@@ -1130,3 +1130,14 @@ MatrixXd jacobianForPoint2(const vector<MatrixXd>& input)
 	return jacobianForPoint2(parameters,variables);
 
 }
+
+MatrixXd estimateCameraParameter(const MatrixXd& projPoints,const MatrixXd& points)
+{
+	MatrixXd dataset(projPoints.rows(),6);
+
+	dataset.block(0,0,projPoints.rows(),3)=projPoints;
+	dataset.block(0,3,projPoints.rows(),3)=points;
+	MatrixXd obj_vals=MatrixXd::Zero(1,projPoints.rows()*3);
+	MatrixXd para=MatrixXd::Zero(1,6);
+	return	levenbergM_simple(dataset,obj_vals,functionForRotationAndTransition,jacobianForRotationAndTransition,para);
+}

@@ -66,24 +66,6 @@ auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const v
 auto threeDimensionReconstruction(const string& featureFileName,const string& matchFileName)->tuple<MatrixXd,MatrixXd,MatrixXd>;
 
 
-/*
-template<class T>
-auto geometricReconstructionFrom2Frames(const vector<vector<T> >& pnts1,const vector<vector<T> >& pnts2,vector<double>& transition,vector<double >& rotation,const vector<int>& imageSize)->pair<MatrixXd,vector<double> >
-{
-	assert(pnts1.size()==pnts2.size());
-
-	MatrixXd sphericalPoints1(pnts1.size(),3);
-	MatrixXd sphericalPoints2(pnts2.size(),3);
-
-	for (int i = 0; i < pnts1.size(); i++)
-	{
-		sphericalPoints1.row(i)=imageCordinate2Phere(pnts1[i],imageSize);
-		sphericalPoints2.row(i)=imageCordinate2Phere(pnts2[i],imageSize);
-	}
-	return geometricReconstructionFrom2Frames(sphericalPoints1,sphericalPoints2,transition,rotation);
-	
-}*/
-
 
 MatrixXd bestPoint(const MatrixXd& p, const MatrixXd& u);
 
@@ -113,3 +95,25 @@ MatrixXd functionForRotationAndTransition2(const vector<MatrixXd>& input);
 MatrixXd jacobianForRotationAndTransition2(const vector<MatrixXd>& input);
 
 MatrixXd jacobianForPoint2(const vector<MatrixXd>& input);
+
+
+MatrixXd estimateCameraParameter(const MatrixXd& projPoints,const MatrixXd& points);
+
+
+/*
+template<class T>
+auto geometricReconstructionFrom2Frames(const vector<vector<T> >& pnts1,const vector<vector<T> >& pnts2,vector<double>& transition,vector<double >& rotation,const vector<int>& imageSize)->pair<MatrixXd,vector<double> >
+{
+	assert(pnts1.size()==pnts2.size());
+
+	MatrixXd sphericalPoints1(pnts1.size(),3);
+	MatrixXd sphericalPoints2(pnts2.size(),3);
+
+	for (int i = 0; i < pnts1.size(); i++)
+	{
+		sphericalPoints1.row(i)=imageCordinate2Phere(pnts1[i],imageSize);
+		sphericalPoints2.row(i)=imageCordinate2Phere(pnts2[i],imageSize);
+	}
+	return geometricReconstructionFrom2Frames(sphericalPoints1,sphericalPoints2,transition,rotation);
+	
+}*/
