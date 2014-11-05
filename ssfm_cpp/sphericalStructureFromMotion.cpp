@@ -650,9 +650,9 @@ MatrixXd jacobianForPoint(const MatrixXd& parameters,const MatrixXd& variables)
 	jsym(1,0) = (b*r2*4.0+c*r3*4.0-b*r1*r3*2.0+c*r1*r2*2.0)*mt3;
 	jsym(1,1) = -(c*-4.0+b*r1*4.0+c*(r1*r1)-c*(r2*r2)+c*(r3*r3)+b*r2*r3*2.0)*mt3;
 	jsym(1,2) = -(b*4.0+c*r1*4.0-b*(r1*r1)-b*(r2*r2)+b*(r3*r3)-c*r2*r3*2.0)*mt3;
-	jsym(2,0) = -(c*4.0+a*r2*4.0+c*(r1*r1)-c*(r2*r2)-c*(r3*r3)-a*r1*r3*2.0)*mt3;
-	jsym(2,1) = (a*r1*4.0+c*r3*4.0+a*r2*r3*2.0-c*r1*r2*2.0)*mt3;
-	jsym(2,2) = -(a*-4.0+c*r2*4.0+a*(r1*r1)+a*(r2*r2)-a*(r3*r3)+c*r1*r3*2.0)*mt3;
+	jsym(2,0) = -(c*4.0+a*r2*4.0+c*(r1*r1)-c*(r2*r2)-c*(r3*r3)-a*r1*r3*2.0)*mt2;
+	jsym(2,1) = (a*r1*4.0+c*r3*4.0+a*r2*r3*2.0-c*r1*r2*2.0)*mt2;
+	jsym(2,2) = -(a*-4.0+c*r2*4.0+a*(r1*r1)+a*(r2*r2)-a*(r3*r3)+c*r1*r3*2.0)*mt2;
 	return jsym;
 }
 
