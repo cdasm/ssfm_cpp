@@ -23,7 +23,7 @@ using namespace std;
 
 //this is the function which converts from 2D image coordinates to 3D spherical coordinate with reference to image size.
 template<class T>
-MatrixXd imageCordinate2Phere(vector<T> coordinates,vector<T> imageSize)
+MatrixXd imageCordinate2Phere(vector<T> coordinates,vector<int> imageSize)
 {
 	double a=(double)coordinates[0];
 	double b=(double)coordinates[1];
@@ -53,15 +53,15 @@ enum cameraType{_static,_unitLength,_ordinary};
 vector<pair<MatrixXd,MatrixXd> > transitionAndRotationFromEssential(const MatrixXd& essential);
 
 
-pair<MatrixXd,vector<bool> > bestPoints(const MatrixXd& spnts1,const MatrixXd& spnts2,const vector<MatrixXd>& transitions,const vector<MatrixXd>& rotations);
+pair<MatrixXd,vector<double> > bestPoints(const MatrixXd& spnts1,const MatrixXd& spnts2,const vector<MatrixXd>& transitions,const vector<MatrixXd>& rotations);
 
 
 
 
-auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const MatrixXd& sphericalPoints2,vector<double>& transition,vector<double >& rotation)->pair<vector<vector<double> >,vector<double> >;
+auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const MatrixXd& sphericalPoints2,vector<double>& transition,vector<double >& rotation)->pair<MatrixXd,vector<double> >;
 
 template<class T>
-auto geometricReconstructionFrom2Frames(const vector<vector<T> >& pnts1,const vector<vector<T> >& pnts2,vector<double>& transition,vector<double >& rotation,const vector<T>& imageSize)->pair<vector<vector<double> >,vector<double> >
+auto geometricReconstructionFrom2Frames(const vector<vector<T> >& pnts1,const vector<vector<T> >& pnts2,vector<double>& transition,vector<double >& rotation,const vector<int>& imageSize)->pair<MatrixXd,vector<double> >
 {
 	assert(pnts1.size()==pnts2.size());
 
@@ -79,3 +79,30 @@ auto geometricReconstructionFrom2Frames(const vector<vector<T> >& pnts1,const ve
 
 
 MatrixXd bestPoint(const MatrixXd& p, const MatrixXd& u);
+
+
+
+MatrixXd functionForRotationAndTransition(const MatrixXd& parameters,const MatrixXd& variables);
+
+MatrixXd jacobianForPoint(const MatrixXd& parameters,const MatrixXd& variables);
+
+MatrixXd jacobianForRotationAndTransition(const MatrixXd& parameters,const MatrixXd& variables);
+
+MatrixXd functionForRotationAndTransition(const vector<MatrixXd>& input);
+
+MatrixXd jacobianForRotationAndTransition(const vector<MatrixXd>& input);
+
+MatrixXd jacobianForPoint(const vector<MatrixXd>& input);
+
+
+MatrixXd functionForRotationAndTransition2(const MatrixXd& parameters,const MatrixXd& variables);
+
+MatrixXd jacobianForPoint2(const MatrixXd& parameters,const MatrixXd& variables);
+
+MatrixXd jacobianForRotationAndTransition2(const MatrixXd& parameters,const MatrixXd& variables);
+
+MatrixXd functionForRotationAndTransition2(const vector<MatrixXd>& input);
+
+MatrixXd jacobianForRotationAndTransition2(const vector<MatrixXd>& input);
+
+MatrixXd jacobianForPoint2(const vector<MatrixXd>& input);

@@ -16,7 +16,7 @@ int main_()
 {
   
 
-	auto test=imageCordinate2Phere(vector<double> (2,10),vector<double> (2,28));
+	auto test=imageCordinate2Phere(vector<double> (2,10),vector<int> (2,28));
 	
 
 	MatrixXd m = MatrixXd::Random(3,3);
@@ -116,17 +116,17 @@ int main()
 {
 
 	 Eigen::MatrixXf m(4,4);
-  m <<  1, 2, 3, 4,
-        5, 6, 7, 8,
-        9,10,11,12,
-       13,14,15,16;
-  cout << "Block in the middle" << endl;
-  cout << m.block<2,2>(1,1) << endl << endl;
-  for (int i = 1; i <= 4; ++i)
-  {
-    cout << "Block of size " << i << "x" << i << endl;
-    cout << m.block(0,0,i,i) << endl << endl;
-  }
+	  m <<  1, 2, 3, 4,
+			5, 6, 7, 8,
+			9,10,11,12,
+		   13,14,15,16;
+	  cout << "Block in the middle" << endl;
+	  cout << m.block<2,2>(1,1) << endl << endl;
+	  for (int i = 1; i <= 4; ++i)
+	  {
+		cout << "Block of size " << i << "x" << i << endl;
+		cout << m.block(0,0,i,i) << endl << endl;
+	  }
 
 	MatrixXd test=MatrixXd::Random(3,4);
 
