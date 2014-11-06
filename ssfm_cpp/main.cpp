@@ -246,10 +246,38 @@ void testInter()
 	cout<<acos(1)<<endl;
 	main_();
 }
+
+
+void testInverseWithSolve()
+{
+	MatrixXd A=MatrixXd::Random(3,3);
+	VectorXd b=VectorXd::Random(3);
+
+//	auto an1=A.colPivHouseholderQr().solve(b);
+	VectorXd c=A.row(0);
+	cout<<A<<endl;
+	cout<<c<<endl;
+
+	MatrixXd d(1,3);
+
+	d=c.transpose();
+	cout<<d<<endl;
+
+	VectorXd x=A.transpose().colPivHouseholderQr().solve(b);
+
+//	dp=d*J*H_lm.inverse();
+//	VectorXd tosdj=d*J;
+//	VectorXd solution=H_lm..transpose().colPivHouseholderQr().solve(tosdj);
+//	dp=solution.transpose();
+
+	cout << x <<"\n"<< endl;
+	cout<<b.transpose()*A.inverse()<<endl;
+}
+
 int main()
 {
-	
-	
+	cout<<1e10/1e8<<endl;
+//	testInverseWithSolve();
 
 	
 	

@@ -681,8 +681,6 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 	auto bundleAdjustment=[&](unordered_map<int,cameraType>& lbundlePara)
 	{
 		unordered_set<int> pntIndx;
-		//unordered_map<int,int> staticCameras;
-		//unordered_map<int,int> staticCameras_back;
 
 		unordered_map<int,pair<int,int>> cameraParaLookUp;
 		unordered_map<int,pair<int,int>> pointParaLookUp;
@@ -905,13 +903,13 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 			if(lbundlePara[cc.first]==cameraType::_unitLength)
 			{
 				
-				transitions.row(cc.first)=transitionFrom2Para(paraM.block(0,4,1,2));
+				transitions.row(cc.first)=transitionFrom2Para(paraM.block(0,3,1,2));
 			}
 
 			if(lbundlePara[cc.first]==cameraType::_ordinary)
 			{
 				
-				transitions.row(cc.first)=paraM.block(0,4,1,3);
+				transitions.row(cc.first)=paraM.block(0,3,1,3);
 			}
 			rotations.row(cc.first)=paraM.block(0,0,1,3);
 			//=paraM;
@@ -938,6 +936,9 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 			}
 		}
 		auto cameraPara=estimateCameraParameter(sphericalFeatures[cameraIndex],curInd1,reconstructedPoints,curInd2);
+
+		cout<<"estimated camera parameters of camera number "<<cameraIndex<<": "<<cameraPara<<endl;
+
 		rotations.row(cameraIndex)=cameraPara.block(0,0,1,3);
 		transitions.row(cameraIndex)=cameraPara.block(0,3,1,3);
 		alreadyEstimated[cameraIndex]=true;
@@ -945,26 +946,16 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 
 
 
-		//vector<cameraType> _cameraTypes(cameraIndex+1);
-
-		//vector<int> camIndx(cameraIndex+1);
 
 		unordered_map<int,cameraType> bundlePara;
-
-//		_cameraTypes[0]=cameraType::_static;
-//		_cameraTypes[1]=cameraType::_unitLength;
-//		camIndx[0]=0;
-//		camIndx[1]=1;
 
 		bundlePara[0]=cameraType::_static;
 		bundlePara[1]=cameraType::_unitLength;
 		for (int i = 2; i <=cameraIndex; i++)
 		{
-//			_cameraTypes[2]=cameraType::_ordinary;
-//			camIndx[i]=i;
 			bundlePara[i]=cameraType::_ordinary;
 		}
-		cout<<"bundle adjustment for cameras and points before camera number"<<cameraIndex<<endl;
+		cout<<"bundle adjustment for cameras and points before camera number "<<cameraIndex<<endl;
 		bundleAdjustment(bundlePara);
 
 	}

@@ -69,6 +69,8 @@ MatrixXd levenbergM_simple(MatrixXd& dataset,const MatrixXd& obj_vals,funcType f
 		{
 			updateJ=false;
 			lambda*=10;
+			if(lambda>lambda_limit)
+				break;
 		}
 	}
 
@@ -77,6 +79,19 @@ MatrixXd levenbergM_simple(MatrixXd& dataset,const MatrixXd& obj_vals,funcType f
 }
 
 
+vector<Triplet<double> > tosetSparseMatrix(const MatrixXd& dm,int startrow,int startcolumn)
+{
+	vector<Triplet<double> > toset; 
+	for (int i = 0; i < dm.rows(); i++)
+	{
+		for (int j = 0; j < dm.cols(); j++)
+		{
+			toset.push_back(Triplet<double>(startrow+i,startcolumn+j,dm(i,j)));
+		}
+	}
+	return toset;
+//	sm.setFromTriplets(toset.begin(),toset.end());
+}
 
 
 MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vector<vector<int> >& funcDataMap,const vector<vector<int> >& jfuncDataMap,const MatrixXd& obj_vals,vector<funcType2>& funcs,vector<funcType2>& jfuncs,MatrixXd& initParameters,int maxiter_times)
@@ -92,7 +107,7 @@ MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vec
 	auto para_lm=initParameters;
 	MatrixXd dis_init(1,dataNumber*observationNumber);
 
-	MatrixXd J(dataNumber*observationNumber,parameterNumber);//(dataNumber,parameterNumber);
+	SparseMatrix<double> J;//(dataNumber*observationNumber,parameterNumber);//(dataNumber,parameterNumber);
 
 	MatrixXd d=obj_vals;
 	MatrixXd dp(1,parameterNumber);
@@ -129,9 +144,12 @@ MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vec
 
 	for (int it = 0; it < maxiter_times; it++)
 	{
+		cout<<"iteration Number "<<it<<endl;
+		cout<<"current error is:"<<e<<endl;
 		if (updateJ)
 		{
-			J*=0;
+			J=SparseMatrix<double>(dataNumber*observationNumber,parameterNumber);
+			vector<Triplet<double> > tosetJ;
 			//for (int i = 0; i < dataNumber; i++)
 			//{
 			//	J.block(i*observationNumber,0,observationNumber,parameterNumber)=jfunc(dataset.row(i),para_est);
@@ -157,27 +175,37 @@ MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vec
 				}
 				MatrixXd upd=jfuncs[funcind](curparas);
 				//cout<<upd<<endl;
-				J.block(sr,sc,upd.rows(),upd.cols())=upd;
+//				J.block(sr,sc,upd.rows(),upd.cols())=upd;
+			//	setSparseMatrix(J,upd,sr,sc);
+				auto cursetJ=tosetSparseMatrix(upd,sr,sc);
+				tosetJ.insert(tosetJ.end(),cursetJ.begin(),cursetJ.end());
 			}
+			J.setFromTriplets(tosetJ.begin(),tosetJ.end());
 			update_dis_init(para_est);
 
 
 			d=obj_vals-dis_init;
-			H=J.transpose()*J;
+	//		J.transpose();
+			SparseMatrix<double> sH=J.transpose()*J;
+			H= MatrixXd( sH);
 			if(it==0)
 				e=(d*d.transpose())(0,0);
 		}
 		H_lm=H+MatrixXd::Identity(parameterNumber,parameterNumber)*lambda;
 		dp=d*J*H_lm.inverse();
+		//VectorXd tosdj=d*J;
+		//VectorXd solution=H_lm.transpose().colPivHouseholderQr().solve(tosdj);
+		//dp=solution.transpose();
+
 		para_lm=para_est+dp;
 		update_dis_init(para_lm);
 
 		d=obj_vals-dis_init;
 		double e_lm=(d*d.transpose())(0,0);
 
-		if(e_lm<e)
+		if(e_lm<e || e<0)
 		{
-			cout<<"current error is:"<<e<<endl;
+		
 			lambda/=10;
 			para_est=para_lm;
 			if(e-e_lm<constrain_on_delta_error)
@@ -189,6 +217,8 @@ MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vec
 		{
 			updateJ=false;
 			lambda*=10;
+			if(lambda>lambda_limit)
+				break;
 		}
 	}
 
