@@ -156,7 +156,7 @@ MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vec
 					curparas.push_back(para_est.block(0,jfuncDataMap[i][j],1,jfuncDataMap[i][j+1]));					
 				}
 				MatrixXd upd=jfuncs[funcind](curparas);
-				cout<<upd<<endl;
+				//cout<<upd<<endl;
 				J.block(sr,sc,upd.rows(),upd.cols())=upd;
 			}
 			update_dis_init(para_est);
