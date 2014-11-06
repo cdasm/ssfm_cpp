@@ -111,11 +111,13 @@ MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vec
 			sc=funcDataMap[i][1];
 			//sc=funcDataMap[i][2];
 
-			if(funcDataMap[i][2]>0)
-				curparas.push_back(assistantPara.row(funcDataMap[i][3]));
+			curparas.push_back(dataset.row(funcDataMap[i][2]));
+
+			if(funcDataMap[i][3]>0)
+				curparas.push_back(assistantPara.row(funcDataMap[i][4]));
 
 				
-			for (int j = 4; j < funcDataMap[i].size(); j+=2)
+			for (int j = 5; j < funcDataMap[i].size(); j+=2)
 			{
 				curparas.push_back(paraHere.block(0,funcDataMap[i][j],1,funcDataMap[i][j+1]));					
 			}
@@ -142,11 +144,13 @@ MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vec
 				sr=jfuncDataMap[i][1];
 				sc=jfuncDataMap[i][2];
 
-				if(jfuncDataMap[i][3]>0)
-					curparas.push_back(assistantPara.row(jfuncDataMap[i][4]));
+				curparas.push_back(dataset.row(funcDataMap[i][3]));
+
+				if(jfuncDataMap[i][4]>0)
+					curparas.push_back(assistantPara.row(jfuncDataMap[i][5]));
 
 				
-				for (int j = 5; j < jfuncDataMap[i].size(); j+=2)
+				for (int j = 6; j < jfuncDataMap[i].size(); j+=2)
 				{
 					curparas.push_back(para_est.block(0,jfuncDataMap[i][j],1,jfuncDataMap[i][j+1]));					
 				}

@@ -2,11 +2,13 @@
 
 
 template<class Pnt>
-auto incrementalTrajectoryDetect(const vector<vector<Pnt> >& features, vector<map<int,int>>& sth)-> pair<vector<pair<int,int> >,  vector<vector<int> > >
+auto incrementalTrajectoryDetect(const vector<vector<Pnt> >& features, vector<map<int,int>>& sth)->   vector< pair< vector<int> ,  vector<int>>>
 {
 
-	vector<pair<int,int> > sttend;
-	vector<vector<int> > trajs;
+
+
+	vector<pair<vector<int> ,vector<int> > > result;
+
 	vector<vector<bool> > markers(features.size());	
 
 	for (size_t i = 0; i < features.size(); i++)
@@ -22,10 +24,10 @@ auto incrementalTrajectoryDetect(const vector<vector<Pnt> >& features, vector<ma
 		{
 			if(!markers[i][j])
 			{
-				pair<int,int> stend;
+				vector<int> stend;
 				vector<int> traj;
 		
-				stend.first=i;
+				stend.push_back(i);
 				traj.push_back(j);
 				markers[i][j]=true;
 				
@@ -35,7 +37,7 @@ auto incrementalTrajectoryDetect(const vector<vector<Pnt> >& features, vector<ma
 				while( (cur_frame<features.size()-1) && (sth[cur_frame].count(cur_index)))
 				{
 					int indd=sth[cur_frame][cur_index];
-				
+					stend.push_back(cur_frame+1);		
 					traj.push_back(indd);
 
 					markers[cur_frame+1][indd]=true;
@@ -43,28 +45,27 @@ auto incrementalTrajectoryDetect(const vector<vector<Pnt> >& features, vector<ma
 					cur_index=indd;
 					++cur_frame;			
 				}
-				stend.second=cur_frame;
-				if(stend.second>stend.first)
+				if(stend.size()>1)
 				{
-					trajs.push_back(traj);
-					sttend.push_back(stend);}
+
+					result.push_back(make_pair(stend,traj));
 				}
+			}
 		}
 	}
 	cout<<"feature tracing finished"<<endl;
-	return make_pair(sttend,trajs);
+	return result;
 }
 
 
 
-auto collectFromPairwiseMatching(const string& featureLst,const string& matchLst,vector<vector<vector<int>>>& feas,vector<map<int,int> >& sth,vector<unordered_set<int> >& contain,vector<vector<int> >& featureIsPoint)-> pair<vector<pair<int,int> >,  vector<vector<int> > >
+auto collectFromPairwiseMatching(const string& featureLst,const string& matchLst,vector<vector<vector<int>>>& feas,vector<map<int,int> >& sth,vector<unordered_set<int> >& contain,vector<vector<int> >& featureIsPoint)->  vector<pair<vector<int> ,  vector<int> > >
 {
 
 	auto feaNames=fileIOclass::InVectorString(featureLst);
 	auto mathces=fileIOclass::InVectorString(matchLst);
 
 	vector<vector<vector<int> > > correpss(mathces.size());
-	//vector<vector<vector<int> > > 
 	feas.resize(feaNames.size());
 	featureIsPoint.resize(feaNames.size());
 
@@ -80,7 +81,6 @@ auto collectFromPairwiseMatching(const string& featureLst,const string& matchLst
 	}
 
 
-	//vector<map<int,int> > 
 	sth.resize(correpss.size());
 
 	for(int i=0;i<correpss.size();++i)
@@ -93,12 +93,12 @@ auto collectFromPairwiseMatching(const string& featureLst,const string& matchLst
 	
 	contain.resize(feas.size());
 
-	for (int i = 0; i < trajs.first.size(); i++)
+	for (int i = 0; i < trajs.size(); i++)
 	{
-		for (int j = trajs.first[i].first; j <= trajs.first[i].second; j++)
+		for (int j =0;j < trajs[i].first.size(); j++)
 		{
-			contain[j].insert(i);
-			featureIsPoint[j][trajs.second[i][j-trajs.first[i].first]]=i;
+			contain[ trajs[i].first[j] ].insert(i);
+			featureIsPoint[ trajs[i].first[j] ] [ trajs[i].second[j] ]=i;
 		}
 	}
 
@@ -242,7 +242,6 @@ vector<pair<MatrixXd,MatrixXd> > transitionAndRotationFromEssential(const Matrix
 	JacobiSVD<MatrixXd> svd(essential,Eigen::ComputeFullU |
                                         Eigen::ComputeFullV);
 
-	//cout<<essential<<endl;
 
 	MatrixXd V=	svd.matrixU();
 	MatrixXd U=	svd.matrixV();
@@ -589,9 +588,9 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 	rotations.row(0)=MatrixXd::Zero(1,3);
 	alreadyEstimated[0]=true;
 
-	MatrixXd reconstructedPoints(trajectories.first.size(),3);
+	MatrixXd reconstructedPoints(trajectories.size(),3);
 
-	vector<bool> alreadyReconstructed(trajectories.first.size(),false);
+	vector<bool> alreadyReconstructed(trajectories.size(),false);
 
 	vector<int> imageSize(2);
 	imageSize[0]=512;imageSize[1]=256;
@@ -691,7 +690,19 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 	auto bundleAdjustment=[&](unordered_map<int,cameraType>& lbundlePara)
 	{
 		unordered_set<int> pntIndx;
-		unordered_map<int,int> staticCameras;
+		//unordered_map<int,int> staticCameras;
+		//unordered_map<int,int> staticCameras_back;
+
+		unordered_map<int,pair<int,int>> cameraParaLookUp;
+		unordered_map<int,pair<int,int>> pointParaLookUp;
+		unordered_map<int,int> staticCameraParaLookUp;
+
+		vector<vector<int> > funcDataMap;
+		vector<vector<int> > jfuncDataMap;
+		int totalProjCount=0;
+		int totalParameterCount=0;
+		vector<pair<int,int> > allProjs;
+
 		for (auto& s:lbundlePara)
 		{
 			assert(alreadyEstimated[s.first]);
@@ -699,30 +710,227 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 			{
 				for (auto&w: contain[s.first])
 				{
-					if(alreadyReconstructed[w])
-						pntIndx.insert(w);
+					if(alreadyReconstructed[w] && !pntIndx.count(w))
+					{
+						int prjCount=0;
 
+						unordered_set<int> curPrj;
+						for (int i = 0; i < trajectories[w].first.size(); i++)
+						{
+							if(lbundlePara.count(trajectories[w].first[i]))
+							{
+								++prjCount;
+								curPrj.insert(i);
+							}
+						}
+
+						if(prjCount>1)
+						{
+							if(!pointParaLookUp.count(w))
+							{
+								pointParaLookUp[w]=make_pair(totalParameterCount,3);
+								totalParameterCount+=3;
+							}
+							for (auto& x:curPrj)
+							{
+								int curPrjCamera=trajectories[w].first[x];
+
+								
+
+
+
+								switch (lbundlePara[curPrjCamera])
+								{
+								case cameraType::_static:
+									{
+										if(!staticCameraParaLookUp.count(curPrjCamera))
+										{
+											int _t=staticCameraParaLookUp.size();
+											staticCameraParaLookUp[curPrjCamera]=_t;
+										}
+										
+										vector<int> static_funcMap(7);
+										vector<int> static_jfuncMap(8);
+										static_funcMap[0]=0;
+										static_funcMap[1]=totalProjCount*3;
+										static_funcMap[2]=totalProjCount;
+										static_funcMap[3]=1;
+										static_funcMap[4]=staticCameraParaLookUp[curPrjCamera];
+										static_funcMap[5]=pointParaLookUp[w].first;
+										static_funcMap[6]=pointParaLookUp[w].second;
+										funcDataMap.push_back(static_funcMap);
+										
+										static_jfuncMap[0]=2;
+										static_jfuncMap[1]=totalProjCount*3;
+										static_jfuncMap[2]=pointParaLookUp[w].first;
+										static_jfuncMap[3]=totalProjCount;
+										static_jfuncMap[4]=1;
+										static_jfuncMap[5]=staticCameraParaLookUp[curPrjCamera];
+										static_jfuncMap[6]=pointParaLookUp[w].first;
+										static_jfuncMap[7]=pointParaLookUp[w].second;
+										jfuncDataMap.push_back(static_jfuncMap);
+									}
+									break;
+								case cameraType::_unitLength:
+									{
+										if(!cameraParaLookUp.count(curPrjCamera))
+										{
+											cameraParaLookUp[curPrjCamera]=make_pair(totalParameterCount,5);
+											totalParameterCount+=5;
+										}
+										vector<int> funcMap(9);	
+										vector<int> jfuncMap(10);
+										funcMap[0]=1;
+										funcMap[1]=totalProjCount*3;
+										funcMap[2]=totalProjCount;
+										funcMap[3]=-1;
+										funcMap[4]=-1;
+										funcMap[5]=cameraParaLookUp[curPrjCamera].first;
+										funcMap[6]=cameraParaLookUp[curPrjCamera].second;
+										funcMap[7]=pointParaLookUp[w].first;
+										funcMap[8]=pointParaLookUp[w].second;
+										funcDataMap.push_back(funcMap);
+										
+										jfuncMap[0]=1;
+										jfuncMap[1]=totalProjCount*3;
+										jfuncMap[2]=cameraParaLookUp[curPrjCamera].first;
+										jfuncMap[3]=totalProjCount;
+										jfuncMap[4]=-1;
+										jfuncMap[5]=-1;
+										jfuncMap[6]=cameraParaLookUp[curPrjCamera].first;
+										jfuncMap[7]=cameraParaLookUp[curPrjCamera].second;
+										jfuncMap[8]=pointParaLookUp[w].first;
+										jfuncMap[9]=pointParaLookUp[w].second;
+										jfuncDataMap.push_back(jfuncMap);
+
+										jfuncMap[0]=3;
+									
+										jfuncMap[2]=pointParaLookUp[w].first;
+									
+										jfuncDataMap.push_back(jfuncMap);
+
+									}
+									break;
+								case cameraType::_ordinary:
+									{
+										if(!cameraParaLookUp.count(curPrjCamera))
+										{
+											cameraParaLookUp[curPrjCamera]=make_pair(totalParameterCount,6);
+											totalParameterCount+=6;
+										}
+										vector<int> funcMap(9);	
+										vector<int> jfuncMap(10);
+										funcMap[0]=0;
+										funcMap[1]=totalProjCount*3;
+										funcMap[2]=totalProjCount;
+										funcMap[3]=-1;
+										funcMap[4]=-1;
+										funcMap[5]=cameraParaLookUp[curPrjCamera].first;
+										funcMap[6]=cameraParaLookUp[curPrjCamera].second;
+										funcMap[7]=pointParaLookUp[w].first;
+										funcMap[8]=pointParaLookUp[w].second;
+										funcDataMap.push_back(funcMap);
+										
+										jfuncMap[0]=0;
+										jfuncMap[1]=totalProjCount*3;
+										jfuncMap[2]=cameraParaLookUp[curPrjCamera].first;
+										jfuncMap[3]=totalProjCount;
+										jfuncMap[4]=-1;
+										jfuncMap[5]=-1;
+										jfuncMap[6]=cameraParaLookUp[curPrjCamera].first;
+										jfuncMap[7]=cameraParaLookUp[curPrjCamera].second;
+										jfuncMap[8]=pointParaLookUp[w].first;
+										jfuncMap[9]=pointParaLookUp[w].second;
+										jfuncDataMap.push_back(jfuncMap);
+
+										jfuncMap[0]=2;
+									
+										jfuncMap[2]=pointParaLookUp[w].first;
+									
+										jfuncDataMap.push_back(jfuncMap);
+									}
+									break;
+								default:
+									break;
+								}
+								++totalProjCount;
+								allProjs.push_back(make_pair( trajectories[w].first[x],trajectories[w].second[x]));
+							}
+							pntIndx.insert(w);
+						}
+					}
 				}
-			}
-			else
-			{
-				int _t=staticCameras.size();
-				staticCameras[s.first]=_t;
 			}
 		}
 
-		MatrixXd assistantPara(staticCameras.size(),6);
 
-		
+		MatrixXd assistantPara(staticCameraParaLookUp.size(),6);
 
-		vector<vector<int> > funcDataMap;
-		vector<vector<int> > jfuncDataMap;
+		MatrixXd dataSet(totalProjCount,3);
 
-		MatrixXd dataSet;
+		MatrixXd obj_vals=MatrixXd::Zero(1,totalProjCount*3);
+		MatrixXd intit_parameters(1,totalParameterCount);
 
-		MatrixXd obj_vals;
-		MatrixXd intit_parameters;
-		levenbergM_advanced(dataSet,assistantPara,funcDataMap,jfuncDataMap,obj_vals,functions,jacabianFunctions,intit_parameters);
+		for ( auto& sc: staticCameraParaLookUp)
+		{
+			assistantPara.block(sc.second,0,1,3)=rotations.row(sc.first);
+			assistantPara.block(sc.second,3,1,3)=transitions.row(sc.first);
+		}
+		for (int i=0;i<allProjs.size();++i)
+		{
+			dataSet.row(i)=sphericalFeatures[allProjs[i].first].row(allProjs[i].second);
+		}
+		for (auto& cc:cameraParaLookUp)
+		{
+			
+			MatrixXd paraM;
+			if(lbundlePara[cc.first]==cameraType::_unitLength)
+			{
+				paraM.resize(1,5);
+				paraM.block(0,4,1,2)=transition2Para(transitions.row(cc.first));
+			}
+
+			if(lbundlePara[cc.first]==cameraType::_ordinary)
+			{
+				paraM.resize(1,5);
+				paraM.block(0,4,1,3)=transitions.row(cc.first);
+			}
+			paraM.block(0,0,1,3)=rotations.row(cc.first);
+			intit_parameters.block(0,cc.second.first,1,cc.second.second)=paraM;
+		}
+
+		for(auto& p:pointParaLookUp)
+		{
+
+			intit_parameters.block(0,p.second.first,1,p.second.second)=reconstructedPoints.row(p.first);
+		}
+		auto est_parameters=levenbergM_advanced(dataSet,assistantPara,funcDataMap,jfuncDataMap,obj_vals,functions,jacabianFunctions,intit_parameters);
+
+
+		for (auto& cc:cameraParaLookUp)
+		{
+			
+			MatrixXd paraM=est_parameters.block(0,cc.second.first,1,cc.second.second);
+			if(lbundlePara[cc.first]==cameraType::_unitLength)
+			{
+				
+				transitions.row(cc.first)=transitionFrom2Para(paraM.block(0,4,1,2));
+			}
+
+			if(lbundlePara[cc.first]==cameraType::_ordinary)
+			{
+				
+				transitions.row(cc.first)=paraM.block(0,4,1,3);
+			}
+			rotations.row(cc.first)=paraM.block(0,0,1,3);
+			//=paraM;
+		}
+
+		for(auto& p:pointParaLookUp)
+		{
+
+			reconstructedPoints.row(p.first)=est_parameters.block(0,p.second.first,1,p.second.second);
+		}
 
 
 	};
