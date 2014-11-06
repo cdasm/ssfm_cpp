@@ -1,7 +1,7 @@
 #include "levenbergMarquardt.h"
 
 
-
+#include <iostream>
 
 MatrixXd levenbergM_simple(MatrixXd& dataset,const MatrixXd& obj_vals,funcType func,funcType jfunc,MatrixXd& initParameters,int maxiter_times)
 {
@@ -92,7 +92,7 @@ MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vec
 	auto para_lm=initParameters;
 	MatrixXd dis_init(1,dataNumber*observationNumber);
 
-	MatrixXd J;//(dataNumber,parameterNumber);
+	MatrixXd J(dataNumber*observationNumber,parameterNumber);//(dataNumber,parameterNumber);
 
 	MatrixXd d=obj_vals;
 	MatrixXd dp(1,parameterNumber);
@@ -122,7 +122,8 @@ MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vec
 				curparas.push_back(paraHere.block(0,funcDataMap[i][j],1,funcDataMap[i][j+1]));					
 			}
 			MatrixXd upd=funcs[funcind](curparas);
-			J.block(0,sc,1,sc+upd.rows())=upd;
+			//cout<<i<<endl;
+			dis_init.block(0,sc,1,upd.cols())=upd;
 		}
 	};
 
@@ -144,7 +145,7 @@ MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vec
 				sr=jfuncDataMap[i][1];
 				sc=jfuncDataMap[i][2];
 
-				curparas.push_back(dataset.row(funcDataMap[i][3]));
+				curparas.push_back(dataset.row(jfuncDataMap[i][3]));
 
 				if(jfuncDataMap[i][4]>0)
 					curparas.push_back(assistantPara.row(jfuncDataMap[i][5]));
@@ -155,7 +156,8 @@ MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vec
 					curparas.push_back(para_est.block(0,jfuncDataMap[i][j],1,jfuncDataMap[i][j+1]));					
 				}
 				MatrixXd upd=jfuncs[funcind](curparas);
-				J.block(sr,sc,sr+upd.rows(),sc+upd.cols())=upd;
+				cout<<upd<<endl;
+				J.block(sr,sc,upd.rows(),upd.cols())=upd;
 			}
 			update_dis_init(para_est);
 
@@ -175,6 +177,7 @@ MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vec
 
 		if(e_lm<e)
 		{
+			cout<<"current error is:"<<e<<endl;
 			lambda/=10;
 			para_est=para_lm;
 			if(e-e_lm<constrain_on_delta_error)

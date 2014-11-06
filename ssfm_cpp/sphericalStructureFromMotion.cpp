@@ -246,13 +246,7 @@ vector<pair<MatrixXd,MatrixXd> > transitionAndRotationFromEssential(const Matrix
 	MatrixXd V=	svd.matrixU();
 	MatrixXd U=	svd.matrixV();
 
-	cout<<"V\n"<<endl;
 
-	cout<<V<<endl;
-
-	cout<<"U\n"<<endl;
-
-	cout<<U<<endl;
 	MatrixXd W=MatrixXd::Zero(3,3);
 
 	W<<0, -1, 0, 1, 0, 0, 0, 0, 1;
@@ -270,9 +264,6 @@ vector<pair<MatrixXd,MatrixXd> > transitionAndRotationFromEssential(const Matrix
 	if(R2.determinant()<0)
 		R2*=-1;
 
-	cout<<Tx<<endl;
-	cout<<R1<<endl;
-	cout<<R2<<endl;
 //	getchar();
 	vector<pair<MatrixXd,MatrixXd> > result;
 
@@ -478,11 +469,11 @@ auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const v
 		observation.row(i)=convert(tob);
 	}
 
-	cout<<observation<<endl<<endl;
+	//cout<<observation<<endl<<endl;
 
 	JacobiSVD<decltype(observation)> svd(observation, Eigen::ComputeFullU |
                                         Eigen::ComputeFullV);
-	std::cout << "matrix V" << endl << svd.matrixV() <<"\n"<< endl;
+	//std::cout << "matrix V" << endl << svd.matrixV() <<"\n"<< endl;
 
 	vector<MatrixXd> essentialMatrixes(2,MatrixXd::Zero(3,3));
 
@@ -522,10 +513,10 @@ auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const v
 	int bestCount;
 	vector<int> goodPointCount(transtionAndRotations.size(),0);
 
-	cout<<"transition:\n"<<endl;
+	//cout<<"transition:\n"<<endl;
 	for (int i = 0; i < transtionAndRotations.size(); i++)
 	{
-		cout<<transtionAndRotations[i].first<<endl;
+		//cout<<transtionAndRotations[i].first<<endl;
 		vector<MatrixXd> trans(2,MatrixXd::Zero(1,3));
 		trans[1]=transtionAndRotations[i].first;
 		vector<MatrixXd> rots(2,MatrixXd::Identity(3,3));
@@ -552,9 +543,9 @@ auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const v
 	rotation=rotationThomasonPara (transtionAndRotations[bestIndex].second.inverse());
 
 //	bestIndex=3;
- 	cout<<"the best index:"<<bestIndex<<endl;
-	cout<<"the best transition:\n"<<transtionAndRotations[bestIndex].first <<endl;
-	cout<<"the best rotation:\n"<<transtionAndRotations[bestIndex].second<<endl;
+ //	cout<<"the best index:"<<bestIndex<<endl;
+//	cout<<"the best transition:\n"<<transtionAndRotations[bestIndex].first <<endl;
+//	cout<<"the best rotation:\n"<<transtionAndRotations[bestIndex].second<<endl;
 
 	
 
@@ -887,13 +878,13 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 			if(lbundlePara[cc.first]==cameraType::_unitLength)
 			{
 				paraM.resize(1,5);
-				paraM.block(0,4,1,2)=transition2Para(transitions.row(cc.first));
+				paraM.block(0,3,1,2)=transition2Para(transitions.row(cc.first));
 			}
 
 			if(lbundlePara[cc.first]==cameraType::_ordinary)
 			{
-				paraM.resize(1,5);
-				paraM.block(0,4,1,3)=transitions.row(cc.first);
+				paraM.resize(1,6);
+				paraM.block(0,3,1,3)=transitions.row(cc.first);
 			}
 			paraM.block(0,0,1,3)=rotations.row(cc.first);
 			intit_parameters.block(0,cc.second.first,1,cc.second.second)=paraM;
@@ -946,7 +937,7 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 				curInd2.push_back(featureIsPoint[cameraIndex][i]);
 			}
 		}
-		auto cameraPara=estimateCameraParameter(sphericalFeatures[cameraIndex],curInd1,reconstructedPoints,ind2);
+		auto cameraPara=estimateCameraParameter(sphericalFeatures[cameraIndex],curInd1,reconstructedPoints,curInd2);
 		rotations.row(cameraIndex)=cameraPara.block(0,0,1,3);
 		transitions.row(cameraIndex)=cameraPara.block(0,3,1,3);
 		alreadyEstimated[cameraIndex]=true;
@@ -973,6 +964,7 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 //			camIndx[i]=i;
 			bundlePara[i]=cameraType::_ordinary;
 		}
+		cout<<"bundle adjustment for cameras and points before camera number"<<cameraIndex<<endl;
 		bundleAdjustment(bundlePara);
 
 	}
@@ -1496,7 +1488,7 @@ MatrixXd estimateCameraParameter(const MatrixXd& projPoints,const vector<int>& i
 	}
 
 	
-	MatrixXd obj_vals=MatrixXd::Zero(1,projPoints.rows()*3);
+	MatrixXd obj_vals=MatrixXd::Zero(1,ind1.size()*3);
 	MatrixXd para=MatrixXd::Zero(1,6);
 	return	levenbergM_simple(dataset,obj_vals,functionForRotationAndTransition,jacobianForRotationAndTransition,para);
 }

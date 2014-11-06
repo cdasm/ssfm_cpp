@@ -7,6 +7,7 @@
 #include <direct.h>
 #include <Eigen/Dense>
 #include <algorithm>
+#include <fstream>
 #include "sphericalStructureFromMotion.h"
 #include "utinity.h"
 
@@ -202,7 +203,9 @@ void testLM()
 
 	cout<<estimateCameraParameter(prjp,pnts);
 }
-int main()
+
+void testInter()
+
 {
 	testLM();
 	testJacobian();
@@ -241,16 +244,33 @@ int main()
 	cout<<acos(-0.5)<<endl;
 	cout<<acos(0)<<endl;
 	cout<<acos(1)<<endl;
+	main_();
+}
+int main()
+{
+	
 	
 
-	main_();
+	
 	
 	_chdir("D:\\agood");
 //set_intersection(contain[0].begin(),contain[0].end(),contain[1].begin(),contain[1].end(),back_inserter(pointOnFirst2Frames));
 	
 	//auto pointOnFirst2Frames=set_intersect(contain[0],contain[1]);
 
-	threeDimensionReconstruction("orb.lst","match.lst");
+	auto pointsCameras=threeDimensionReconstruction("orb.lst","match.lst");
+	ofstream f1;
+	f1.open("points.txt");
+	f1<<get<2>(pointsCameras);
+	f1.close();
+	f1.open("transitions.txt");
+	f1<<get<0>(pointsCameras);
+	f1.close();
+	f1.open("rotations.txt");
+	f1<<get<1>(pointsCameras);
+	f1.close();
+
+	
 
 	return 0;
 
