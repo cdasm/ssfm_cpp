@@ -637,6 +637,11 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 				alreadyReconstructed[mindex[i]]=true;
 
 			}
+			else
+			{
+				alreadyReconstructed[mindex[i]]=false;
+			}
+
 		}
 	};
 
@@ -650,7 +655,7 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 		vector<int> lIndex,lIndex1,lIndex2;
 		for (auto& s:correspondences[lcameraIndex-1])
 		{
-			if(!alreadyReconstructed[featureIsPoint[lcameraIndex-1][s.first]])
+//			if(!alreadyReconstructed[featureIsPoint[lcameraIndex-1][s.first]])
 			{
 				lIndex.push_back(featureIsPoint[lcameraIndex-1][s.first]);
 				lIndex1.push_back(s.first);
@@ -924,6 +929,15 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 
 	};
 
+	unordered_map<int,cameraType> bundlePara1;
+
+	bundlePara1[0]=cameraType::_static;
+	bundlePara1[1]=cameraType::_unitLength;
+
+	cout<<"bundle adjustment for cameras and points before camera number "<<"1"<<endl;
+	bundleAdjustment(bundlePara1);
+	reconstructPoints(1);
+
 	for (int cameraIndex = 2; cameraIndex < features.size(); cameraIndex++)
 	{
 		vector<int> curInd1,curInd2;
@@ -935,6 +949,12 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 				curInd2.push_back(featureIsPoint[cameraIndex][i]);
 			}
 		}
+		cout<<curInd1.size()<<" projections matching "<<curInd2.size()<<" points for camera position estimation"<<"\n\n"<<endl;
+
+		if(cameraIndex==12)
+		{
+			cout<<"break point";
+		}
 		auto cameraPara=estimateCameraParameter(sphericalFeatures[cameraIndex],curInd1,reconstructedPoints,curInd2);
 
 		cout<<"estimated camera parameters of camera number "<<cameraIndex<<": "<<cameraPara<<endl;
@@ -942,7 +962,7 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 		rotations.row(cameraIndex)=cameraPara.block(0,0,1,3);
 		transitions.row(cameraIndex)=cameraPara.block(0,3,1,3);
 		alreadyEstimated[cameraIndex]=true;
-		reconstructedPoints(cameraIndex);
+		reconstructPoints(cameraIndex);
 
 
 
@@ -957,7 +977,7 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 		}
 		cout<<"bundle adjustment for cameras and points before camera number "<<cameraIndex<<endl;
 		bundleAdjustment(bundlePara);
-
+		reconstructPoints(cameraIndex);
 	}
 
 
