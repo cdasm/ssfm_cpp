@@ -209,8 +209,8 @@ MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vec
 		
 			lambda/=10;
 			para_est=para_lm;
-	//	if(e-e_lm<constrain_on_delta_error)
-	//			break;
+		if(e-e_lm<constrain_on_delta_error)
+				break;
 			e=e_lm;
 			updateJ=true;
 		}
@@ -218,8 +218,8 @@ MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vec
 		{
 			updateJ=false;
 			lambda*=10;
-		//	if(lambda>lambda_limit)
-		//		break;
+			if(lambda>lambda_limit)
+				break;
 		}
 	}
 

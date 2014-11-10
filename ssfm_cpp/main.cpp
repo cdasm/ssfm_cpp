@@ -286,7 +286,7 @@ int main()
 	
 	//auto pointOnFirst2Frames=set_intersect(contain[0],contain[1]);
 
-	auto pointsCameras=threeDimensionReconstruction("orb.lst","match.lst");
+	auto pointsCameras=threeDimensionReconstruction("torb.lst","tmatch.lst");
 	ofstream f1;
 	f1.open("points.txt");
 	f1<<get<2>(pointsCameras);

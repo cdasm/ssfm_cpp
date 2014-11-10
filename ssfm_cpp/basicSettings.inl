@@ -15,5 +15,5 @@ namespace sSfm
 namespace lM
 {
 	const double constrain_on_delta_error=0.00001;
-	const double lambda_limit=1e13-1;
+	const double lambda_limit=1e10 - 1;
 }
