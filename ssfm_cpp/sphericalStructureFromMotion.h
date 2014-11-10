@@ -98,7 +98,7 @@ MatrixXd jacobianForRotationAndTransitionUnitLength(const vector<MatrixXd>& inpu
 MatrixXd jacobianForPointUnitLength(const vector<MatrixXd>& input);
 
 
-MatrixXd estimateCameraParameter(const MatrixXd& projPoints,const MatrixXd& points);
+//MatrixXd estimateCameraParameter(const MatrixXd& projPoints,const MatrixXd& points);
 
 MatrixXd estimateCameraParameter(const MatrixXd& projPoints,const vector<int>& ind1,const MatrixXd& points,const vector<int>& ind2);
 

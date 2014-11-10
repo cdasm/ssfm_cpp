@@ -362,7 +362,7 @@ MatrixXd bestPoint(const MatrixXd& p, const MatrixXd& u)
 	result(0,0)=x;
 	result(0,1)=y;
 	result(0,2)=z;
-	return result;
+//	return result;
 
 }
 
@@ -985,10 +985,46 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 	
 }
 
-
-
-
 MatrixXd functionForRotationAndTransition(const MatrixXd& parameters,const MatrixXd& variables)
+{
+	double a,b,c,d,e,f,t1,t2,t3,r1,r2,r3;//% a b c coordinates of projpoints, d e f coordinates of points r1 r2 r3, rotation parameters t1 t2 t3 transition parameters
+	a=parameters(0,0) ;
+	b=parameters(0,1) ;
+	c=parameters(0,2) ;
+	d=parameters(0,3) ;
+	e=parameters(0,4) ;
+	f=parameters(0,5) ;
+
+	r1=variables(0,0) ;
+	r2=variables(0,1) ;
+	r3=variables(0,2) ;
+	t1=variables(0,3) ;
+	t2=variables(0,4) ;
+	t3=variables(0,5) ;
+	MatrixXd A0(1,3);
+	double t5 ,t6 ,t7 ,t8 ,t9 ,t10 ,t11 ,t12 ,t13 ,t14 ,t15 ,t16 ,t17 ;
+	t5 = r1*r1;
+	t6 = r2*r2;
+	t7 = r3*r3;
+	t8 = 1.0/b;
+	t9 = d*d;
+	t10 = e*e;
+	t11 = f*f;
+	t12 = t9+t10+t11;
+	t13 = 1.0/sqrt(t12);
+	t14 = t5+t6+t7+4.0;
+	t15 = 1.0/t14;
+	t16 = 1.0/a;
+	t17 = 1.0/c;
+	A0(0,0) = -t8*t13*t15*t16*(a*e*4.0-b*d*4.0-a*t2*4.0+b*t1*4.0+a*d*r3*4.0-a*f*r1*4.0+b*e*r3*4.0-b*f*r2*4.0-a*e*t5-b*d*t5+a*e*t6+b*d*t6-a*e*t7+b*d*t7+a*r1*t3*4.0-a*r3*t1*4.0+b*r2*t3*4.0-b*r3*t2*4.0+a*t2*t5-a*t2*t6+a*t2*t7+b*t1*t5-b*t1*t6-b*t1*t7+a*d*r1*r2*2.0-b*e*r1*r2*2.0+a*f*r2*r3*2.0-b*f*r1*r3*2.0-a*r1*r2*t1*2.0-a*r2*r3*t3*2.0+b*r1*r2*t2*2.0+b*r1*r3*t3*2.0);
+	A0(0,1) = -t8*t13*t15*t17*(b*f*4.0-c*e*4.0-b*t3*4.0+c*t2*4.0-b*d*r2*4.0+b*e*r1*4.0-c*d*r3*4.0+c*f*r1*4.0-b*f*t5+c*e*t5-b*f*t6-c*e*t6+b*f*t7+c*e*t7-b*r1*t2*4.0+b*r2*t1*4.0-c*r1*t3*4.0+c*r3*t1*4.0+b*t3*t5+b*t3*t6-b*t3*t7-c*t2*t5+c*t2*t6-c*t2*t7+b*d*r1*r3*2.0-c*d*r1*r2*2.0+b*e*r2*r3*2.0-c*f*r2*r3*2.0-b*r1*r3*t1*2.0-b*r2*r3*t2*2.0+c*r1*r2*t1*2.0+c*r2*r3*t3*2.0);
+	A0(0,2) = t13*t15*t16*t17*(a*f*4.0-c*d*4.0-a*t3*4.0+c*t1*4.0-a*d*r2*4.0+a*e*r1*4.0+c*e*r3*4.0-c*f*r2*4.0-a*f*t5-c*d*t5-a*f*t6+c*d*t6+a*f*t7+c*d*t7-a*r1*t2*4.0+a*r2*t1*4.0+c*r2*t3*4.0-c*r3*t2*4.0+a*t3*t5+a*t3*t6-a*t3*t7+c*t1*t5-c*t1*t6-c*t1*t7+a*d*r1*r3*2.0+a*e*r2*r3*2.0-c*e*r1*r2*2.0-c*f*r1*r3*2.0-a*r1*r3*t1*2.0-a*r2*r3*t2*2.0+c*r1*r2*t2*2.0+c*r1*r3*t3*2.0);
+
+	return A0;
+}
+
+
+MatrixXd functionForRotationAndTransition_(const MatrixXd& parameters,const MatrixXd& variables)
 {
 	double a,b,c,d,e,f,t1,t2,t3,r1,r2,r3;//% a b c coordinates of projpoints, d e f coordinates of points r1 r2 r3, rotation parameters t1 t2 t3 transition parameters
 	a=parameters(0,0) ;
@@ -1023,6 +1059,16 @@ MatrixXd functionForRotationAndTransition(const MatrixXd& parameters,const Matri
 
 
 
+MatrixXd functionForRotationAndTransitionUnitLength_(const MatrixXd& parameters,const MatrixXd& variables2)
+{
+	MatrixXd variable(1,6);
+	variable.block(0,0,1,3)=variables2.block(0,0,1,3);
+	variable.block(0,3,1,3)=transitionFrom2Para(variables2.block(0,3,1,2));
+
+	return functionForRotationAndTransition(parameters,variable);
+}
+
+
 MatrixXd functionForRotationAndTransitionUnitLength(const MatrixXd& parameters,const MatrixXd& variables2)
 {
 	MatrixXd variable(1,6);
@@ -1040,7 +1086,163 @@ MatrixXd jacobianForPointUnitLength(const MatrixXd& parameters,const MatrixXd& v
 
 	return jacobianForPoint(parameters,variable);
 }
+
 MatrixXd jacobianForPoint(const MatrixXd& parameters,const MatrixXd& variables)
+{
+
+	double a,b,c,d,e,f,t1,t2,t3,r1,r2,r3;
+	a=parameters(0,0) ;
+	b=parameters(0,1) ;
+	c=parameters(0,2) ;
+	d=parameters(0,3) ;
+	e=parameters(0,4) ;
+	f=parameters(0,5) ;
+
+	r1=variables(0,0) ;
+	r2=variables(0,1) ;
+	r3=variables(0,2) ;
+	t1=variables(0,3) ;
+	t2=variables(0,4) ;
+	t3=variables(0,5) ;
+	MatrixXd A0(3,3);
+	double t5 ,t6 ,t7 ,t8 ,t9 ,t10 ,t11 ,t12 ,t13 ,t14 ,t15 ,t16 ,t17 ,t18 ,t19 ,t20 ,t21 ,t22 ,t23 ,t24 ,t25 ,t26 ,t27 ,t28 ,t29 ,t30 ,t31 ,t32 ,t33 ,t35 ,t36 ,t37 ,t38 ,t39 ,t40 ,t41 ,t42 ,t43 ,t44 ,t45 ,t46 ,t47 ,t48 ,t49 ,t50 ,t34 ,t51 ,t52 ,t53 ,t54 ,t55 ,t56 ,t57 ,t58 ,t59 ,t60 ,t61 ,t62 ,t63 ,t64 ,t65 ,t66 ,t67 ,t68 ,t69 ,t73 ,t74 ,t75 ,t76 ,t77 ,t78 ,t79 ,t80 ,t81 ,t82 ,t83 ,t84 ,t85 ,t86 ,t87 ,t88 ,t70 ,t71 ,t72 ,t89 ,t90 ,t91 ,t92 ,t93 ,t94 ,t95 ,t96 ,t97 ,t98 ,t99 ,t100 ,t101 ,t102 ,t103 ,t104 ,t105 ,t106 ,t107 ,t108 ,t109 ,t113 ,t114 ,t115 ,t116 ,t117 ,t118 ,t119 ,t120 ,t121 ,t122 ,t123 ,t124 ,t125 ,t126 ,t127 ,t128 ,t110 ,t111 ,t112 ;
+	t5 = r1*r1;
+	t6 = r2*r2;
+	t7 = r3*r3;
+	t8 = 1.0/a;
+	t9 = 1.0/b;
+	t10 = d*d;
+	t11 = e*e;
+	t12 = f*f;
+	t13 = t10+t11+t12;
+	t14 = t5+t6+t7+4.0;
+	t15 = 1.0/t14;
+	t16 = 1.0/sqrt(t13);
+	t17 = 1.0/pow(t13,3.0/2.0);
+	t18 = a*e*4.0;
+	t19 = b*t1*4.0;
+	t20 = a*t2*t5;
+	t21 = a*t2*t7;
+	t22 = b*t1*t5;
+	t23 = a*d*r3*4.0;
+	t24 = b*e*r3*4.0;
+	t25 = a*r1*t3*4.0;
+	t26 = b*r2*t3*4.0;
+	t27 = a*e*t6;
+	t28 = b*d*t6;
+	t29 = b*d*t7;
+	t30 = a*d*r1*r2*2.0;
+	t31 = a*f*r2*r3*2.0;
+	t32 = b*r1*r2*t2*2.0;
+	t33 = b*r1*r3*t3*2.0;
+	t35 = b*d*4.0;
+	t36 = a*t2*4.0;
+	t37 = a*t2*t6;
+	t38 = b*t1*t6;
+	t39 = b*t1*t7;
+	t40 = a*f*r1*4.0;
+	t41 = b*f*r2*4.0;
+	t42 = a*r3*t1*4.0;
+	t43 = b*r3*t2*4.0;
+	t44 = a*e*t5;
+	t45 = b*d*t5;
+	t46 = a*e*t7;
+	t47 = b*e*r1*r2*2.0;
+	t48 = b*f*r1*r3*2.0;
+	t49 = a*r1*r2*t1*2.0;
+	t50 = a*r2*r3*t3*2.0;
+	t34 = t18+t19+t20+t21+t22+t23+t24+t25+t26+t27+t28+t29+t30+t31+t32+t33-t35-t36-t37-t38-t39-t40-t41-t42-t43-t44-t45-t46-t47-t48-t49-t50;
+	t51 = b*r2*4.0;
+	t52 = b*r1*r3*2.0;
+	t53 = 1.0/c;
+	t54 = b*f*4.0;
+	t55 = c*t2*4.0;
+	t56 = b*t3*t5;
+	t57 = b*t3*t6;
+	t58 = c*t2*t6;
+	t59 = b*e*r1*4.0;
+	t60 = c*f*r1*4.0;
+	t61 = b*r2*t1*4.0;
+	t62 = c*r3*t1*4.0;
+	t63 = c*e*t5;
+	t64 = b*f*t7;
+	t65 = c*e*t7;
+	t66 = b*d*r1*r3*2.0;
+	t67 = b*e*r2*r3*2.0;
+	t68 = c*r1*r2*t1*2.0;
+	t69 = c*r2*r3*t3*2.0;
+	t73 = c*e*4.0;
+	t74 = b*t3*4.0;
+	t75 = b*t3*t7;
+	t76 = c*t2*t5;
+	t77 = c*t2*t7;
+	t78 = b*d*r2*4.0;
+	t79 = c*d*r3*4.0;
+	t80 = b*r1*t2*4.0;
+	t81 = c*r1*t3*4.0;
+	t82 = b*f*t5;
+	t83 = b*f*t6;
+	t84 = c*e*t6;
+	t85 = c*d*r1*r2*2.0;
+	t86 = c*f*r2*r3*2.0;
+	t87 = b*r1*r3*t1*2.0;
+	t88 = b*r2*r3*t2*2.0;
+	t70 = t54+t55+t56+t57+t58+t59+t60+t61+t62+t63+t64+t65+t66+t67+t68+t69-t73-t74-t75-t76-t77-t78-t79-t80-t81-t82-t83-t84-t85-t86-t87-t88;
+	t71 = b*t6;
+	t72 = b*t7;
+	t89 = c*t5;
+	t90 = c*t7;
+	t91 = a*r1*4.0;
+	t92 = c*r3*4.0;
+	t93 = c*r1*r2*2.0;
+	t94 = a*f*4.0;
+	t95 = c*t1*4.0;
+	t96 = a*t3*t5;
+	t97 = a*t3*t6;
+	t98 = c*t1*t5;
+	t99 = a*e*r1*4.0;
+	t100 = c*e*r3*4.0;
+	t101 = a*r2*t1*4.0;
+	t102 = c*r2*t3*4.0;
+	t103 = c*d*t6;
+	t104 = a*f*t7;
+	t105 = c*d*t7;
+	t106 = a*d*r1*r3*2.0;
+	t107 = a*e*r2*r3*2.0;
+	t108 = c*r1*r2*t2*2.0;
+	t109 = c*r1*r3*t3*2.0;
+	t113 = c*d*4.0;
+	t114 = a*t3*4.0;
+	t115 = a*t3*t7;
+	t116 = c*t1*t6;
+	t117 = c*t1*t7;
+	t118 = a*d*r2*4.0;
+	t119 = c*f*r2*4.0;
+	t120 = a*r1*t2*4.0;
+	t121 = c*r3*t2*4.0;
+	t122 = a*f*t5;
+	t123 = c*d*t5;
+	t124 = a*f*t6;
+	t125 = c*e*r1*r2*2.0;
+	t126 = c*f*r1*r3*2.0;
+	t127 = a*r1*r3*t1*2.0;
+	t128 = a*r2*r3*t2*2.0;
+	t110 = t94+t95+t96+t97+t98+t99+t100+t101+t102+t103+t104+t105+t106+t107+t108+t109-t113-t114-t115-t116-t117-t118-t119-t120-t121-t122-t123-t124-t125-t126-t127-t128;
+	t111 = a*4.0;
+	t112 = a*t6;
+	A0(0,0) = -t8*t9*t15*t16*(b*-4.0+t71+t72+a*r3*4.0-b*t5+a*r1*r2*2.0)+d*t8*t9*t15*t17*t34;
+	A0(0,1) = -t8*t9*t15*t16*(t111+t112+b*r3*4.0-a*t5-a*t7-b*r1*r2*2.0)+e*t8*t9*t15*t17*t34;
+	A0(0,2) = t8*t9*t15*t16*(t51+t52+t91-a*r2*r3*2.0)+f*t8*t9*t15*t17*t34;
+	A0(1,0) = t9*t15*t16*t53*(t51-t52+t92+t93)+d*t9*t15*t17*t53*t70;
+	A0(1,1) = -t9*t15*t16*t53*(c*-4.0+t89+t90+b*r1*4.0-c*t6+b*r2*r3*2.0)+e*t9*t15*t17*t53*t70;
+	A0(1,2) = -t9*t15*t16*t53*(b*4.0-t71+t72+c*r1*4.0-b*t5-c*r2*r3*2.0)+f*t9*t15*t17*t53*t70;
+	A0(2,0) = -t8*t15*t16*t53*(c*4.0+t89-t90+a*r2*4.0-c*t6-a*r1*r3*2.0)-d*t8*t15*t17*t53*t110;
+	A0(2,1) = t8*t15*t16*t53*(t91+t92-t93+a*r2*r3*2.0)-e*t8*t15*t17*t53*t110;
+	A0(2,2) = -t8*t15*t16*t53*(-t111+t112+c*r2*4.0+a*t5-a*t7+c*r1*r3*2.0)-f*t8*t15*t17*t53*t110;
+
+	return A0;
+}
+MatrixXd jacobianForPoint_(const MatrixXd& parameters,const MatrixXd& variables)
 {
 
 	double a,b,c,d,e,f,t1,t2,t3,r1,r2,r3;
@@ -1076,8 +1278,133 @@ MatrixXd jacobianForPoint(const MatrixXd& parameters,const MatrixXd& variables)
 	jsym(2,2) = -(a*-4.0+c*r2*4.0+a*(r1*r1)+a*(r2*r2)-a*(r3*r3)+c*r1*r3*2.0)*mt2;
 	return jsym;
 }
-
 MatrixXd jacobianForRotationAndTransitionUnitLength(const MatrixXd& parameters,const MatrixXd& variables)
+{
+
+	double a,b,c,d,e,f,t1,t2,r1,r2,r3;
+	a=parameters(0,0) ;
+	b=parameters(0,1) ;
+	c=parameters(0,2) ;
+	d=parameters(0,3) ;
+	e=parameters(0,4) ;
+	f=parameters(0,5) ;
+
+	r1=variables(0,0) ;
+	r2=variables(0,1) ;
+	r3=variables(0,2) ;
+	t1=variables(0,3) ;
+	t2=variables(0,4) ;
+	MatrixXd A0(3,5);
+	double t4 ,t5 ,t6 ,t7 ,t8 ,t9 ,t10 ,t11 ,t12 ,t13 ,t14 ,t28 ,t15 ,t16 ,t17 ,t18 ,t26 ,t19 ,t20 ,t21 ,t22 ,t23 ,t24 ,t25 ,t27 ,t29 ,t30 ,t31 ,t32 ,t33 ,t34 ,t35 ,t36 ,t37 ,t38 ,t39 ,t40 ,t41 ,t45 ,t42 ,t43 ,t44 ,t46 ,t47 ,t48 ,t49 ,t50 ,t51 ,t52 ,t53 ,t54 ,t55 ,t56 ,t57 ,t60 ,t58 ,t59 ,t61 ,t62 ,t63 ,t64 ,t65 ,t66 ,t67 ,t68 ,t69 ,t70 ,t71 ,t72 ,t73 ,t74 ,t75 ,t76 ,t77 ,t78 ,t79 ,t80 ,t81 ,t82 ,t83 ,t84 ,t85 ,t86 ,t87 ,t88 ,t89 ,t90 ,t91 ;
+	t4 = r1*r1;
+	t5 = t4*(1.0/4.0);
+	t6 = r2*r2;
+	t7 = t6*(1.0/4.0);
+	t8 = r3*r3;
+	t9 = t8*(1.0/4.0);
+	t10 = t5+t7+t9+1.0;
+	t11 = 1.0/(t10*t10);
+	t12 = 1.0/t10;
+	t13 = cos(t1);
+	t14 = cos(t2);
+	t28 = t13*t14;
+	t15 = b-t28;
+	t16 = r1*t12*(1.0/2.0);
+	t17 = t5+t7+t9-1.0;
+	t18 = sin(t2);
+	t26 = t13*t18;
+	t19 = b-t26;
+	t20 = r1*r3*t11*(1.0/2.0);
+	t21 = r2*t4*t11*(1.0/4.0);
+	t22 = sin(t1);
+	t23 = b-t22;
+	t24 = 1.0/a;
+	t25 = r1*r2*r3*t11*(1.0/4.0);
+	t27 = r1*t6*t11*(1.0/4.0);
+	t29 = r2*t12*(1.0/2.0);
+	t30 = 1.0/b;
+	t31 = r2*r3*t11*(1.0/2.0);
+	t32 = r1*r2*t11*(1.0/2.0);
+	t33 = d*d;
+	t34 = e*e;
+	t35 = f*f;
+	t36 = t33+t34+t35;
+	t37 = 1.0/sqrt(t36);
+	t38 = r3*t12*(1.0/2.0);
+	t39 = r3*t4*t11*(1.0/4.0);
+	t40 = t4+t6+t8+4.0;
+	t41 = 1.0/t40;
+	t45 = t4*t11*(1.0/2.0);
+	t42 = t12+t25-t45;
+	t43 = t23*t42;
+	t44 = r1*t11*t17*(1.0/2.0);
+	t46 = r1*t8*t11*(1.0/4.0);
+	t47 = 1.0/c;
+	t48 = r3*t6*t11*(1.0/4.0);
+	t49 = t6*t11*(1.0/2.0);
+	t50 = r2*t11*t17*(1.0/2.0);
+	t51 = -t16+t27+t31;
+	t52 = t29+t50-r2*t6*t11*(1.0/4.0);
+	t53 = t19*t52;
+	t54 = r2*t8*t11*(1.0/4.0);
+	t55 = t8*t11*(1.0/2.0);
+	t56 = -t12+t25+t55;
+	t57 = t15*t56;
+	t60 = r3*t11*t17*(1.0/2.0);
+	t58 = t38+t48-t60;
+	t59 = t19*t58;
+	t61 = t16+t44-r1*t4*t11*(1.0/4.0);
+	t62 = t15*t61;
+	t63 = t20-t21+t29;
+	t64 = t19*t63;
+	t65 = t32+t38-t39;
+	t66 = -t12+t25+t45;
+	t67 = t19*t66;
+	t68 = t16-t44+t46;
+	t69 = t23*t68;
+	t70 = t67+t69-t15*t65;
+	t71 = t47*t70;
+	t72 = t32-t38+t48;
+	t73 = t19*t72;
+	t74 = t12+t25-t49;
+	t75 = t15*t74;
+	t76 = t29-t50+t54;
+	t77 = t23*t76;
+	t78 = t73+t75+t77;
+	t79 = t47*t78;
+	t80 = -t12+t25+t49;
+	t81 = t23*t80;
+	t82 = t16-t27+t31;
+	t83 = -t16+t31+t46;
+	t84 = t23*t83;
+	t85 = t16+t31-t46;
+	t86 = t15*t85;
+	t87 = t20-t29+t54;
+	t88 = t38+t60-r3*t8*t11*(1.0/4.0);
+	t89 = t23*t88;
+	t90 = t86+t89-t19*t87;
+	t91 = t47*t90;
+	A0(0,0) = t37*(t24*(t62+t64-t23*(t32+t39-r3*t12*(1.0/2.0)))+t30*(t43+t15*(t20+t21-r2*t12*(1.0/2.0))+t19*(t16+t27-r1*t11*t17*(1.0/2.0))));
+	A0(0,1) = -t37*(t30*(t53-t15*t51+t23*(t32+t38-r3*t6*t11*(1.0/4.0)))+t24*(t81-t19*t82+t15*(t21+t29-r2*t11*t17*(1.0/2.0))));
+	A0(0,2) = -t37*(t24*(t84+t19*(t12+t25-t8*t11*(1.0/2.0))+t15*(t38+t39-r3*t11*t17*(1.0/2.0)))-t30*(t57+t59-t23*(t20+t29-r2*t8*t11*(1.0/4.0))));
+	A0(0,3) = -t24*t30*t37*t41*(a*r1*t13*4.0+b*r2*t13*4.0+a*t18*t22*4.0-b*t14*t22*4.0-a*r2*r3*t13*2.0+b*r1*r3*t13*2.0+a*r3*t14*t22*4.0+b*r3*t18*t22*4.0-a*t4*t18*t22+a*t6*t18*t22-a*t8*t18*t22-b*t4*t14*t22+b*t6*t14*t22+b*t8*t14*t22+a*r1*r2*t14*t22*2.0-b*r1*r2*t18*t22*2.0);
+	A0(0,4) = -t13*t24*t30*t37*t41*(a*t14*-4.0-b*t18*4.0+a*r3*t18*4.0-b*r3*t14*4.0+a*t4*t14-a*t6*t14+a*t8*t14-b*t4*t18+b*t6*t18+b*t8*t18+a*r1*r2*t18*2.0+b*r1*r2*t14*2.0);
+	A0(1,0) = t37*(t71-t30*(t43+t15*(t20+t21-t29)+t19*(t16+t27-t44)));
+	A0(1,1) = t37*(t79+t30*(t53-t15*t51+t23*(t32+t38-t48)));
+	A0(1,2) = -t37*(t91+t30*(t57+t59-t23*(t20+t29-t54)));
+	A0(1,3) = t30*t37*t41*t47*(b*t13*4.0+c*r1*t13*4.0-b*t4*t13-b*t6*t13+b*t8*t13+c*t18*t22*4.0-c*r2*r3*t13*2.0+b*r2*t14*t22*4.0-b*r1*t18*t22*4.0+c*r3*t14*t22*4.0-c*t4*t18*t22+c*t6*t18*t22-c*t8*t18*t22-b*r1*r3*t14*t22*2.0-b*r2*r3*t18*t22*2.0+c*r1*r2*t14*t22*2.0);
+	A0(1,4) = t13*t30*t37*t41*t47*(c*t14*-4.0+b*r1*t14*4.0+b*r2*t18*4.0+c*r3*t18*4.0+c*t4*t14-c*t6*t14+c*t8*t14+b*r2*r3*t14*2.0-b*r1*r3*t18*2.0+c*r1*r2*t18*2.0);
+	A0(2,0) = -t37*(t71+t24*(t62+t64-t23*(t32-t38+t39)));
+	A0(2,1) = -t37*(t79-t24*(t81-t19*t82+t15*(t21+t29-t50)));
+	A0(2,2) = t37*(t91+t24*(t84+t19*(t12+t25-t55)+t15*(t38+t39-t60)));
+	A0(2,3) = t24*t37*t41*t47*(a*t13*-4.0+c*r2*t13*4.0+a*t4*t13+a*t6*t13-a*t8*t13-c*t14*t22*4.0+c*r1*r3*t13*2.0-a*r2*t14*t22*4.0+a*r1*t18*t22*4.0+c*r3*t18*t22*4.0-c*t4*t14*t22+c*t6*t14*t22+c*t8*t14*t22+a*r1*r3*t14*t22*2.0+a*r2*r3*t18*t22*2.0-c*r1*r2*t18*t22*2.0);
+	A0(2,4) = -t13*t24*t37*t41*t47*(c*t18*4.0+a*r1*t14*4.0+a*r2*t18*4.0+c*r3*t14*4.0+c*t4*t18-c*t6*t18-c*t8*t18+a*r2*r3*t14*2.0-a*r1*r3*t18*2.0-c*r1*r2*t14*2.0);
+
+
+	return A0;
+}
+
+MatrixXd jacobianForRotationAndTransitionUnitLength_(const MatrixXd& parameters,const MatrixXd& variables)
 {
 
 	double a,b,c,d,e,f,t1,t2,r1,r2,r3;
@@ -1232,7 +1559,194 @@ MatrixXd jacobianForRotationAndTransitionUnitLength(const MatrixXd& parameters,c
 	return A0;
 }
 
+
 MatrixXd jacobianForRotationAndTransition(const MatrixXd& parameters,const MatrixXd& variables)
+{
+
+	double a,b,c,d,e,f,t1,t2,t3,r1,r2,r3;
+	a=parameters(0,0) ;
+	b=parameters(0,1) ;
+	c=parameters(0,2) ;
+	d=parameters(0,3) ;
+	e=parameters(0,4) ;
+	f=parameters(0,5) ;
+
+	r1=variables(0,0) ;
+	r2=variables(0,1) ;
+	r3=variables(0,2) ;
+	t1=variables(0,3) ;
+	t2=variables(0,4) ;
+	t3=variables(0,5) ;
+	
+
+	
+	MatrixXd A0(3,6);
+	double t5 ,t6 ,t7 ,t8 ,t9 ,t10 ,t11 ,t12 ,t13 ,t14 ,t15 ,t16 ,t17 ,t18 ,t19 ,t20 ,t21 ,t22 ,t23 ,t24 ,t25 ,t26 ,t27 ,t28 ,t29 ,t30 ,t31 ,t32 ,t33 ,t35 ,t36 ,t37 ,t38 ,t39 ,t40 ,t41 ,t42 ,t43 ,t44 ,t45 ,t46 ,t47 ,t48 ,t49 ,t50 ,t34 ,t51 ,t52 ,t53 ,t54 ,t55 ,t56 ,t57 ,t58 ,t59 ,t60 ,t61 ,t62 ,t63 ,t64 ,t65 ,t66 ,t67 ,t68 ,t69 ,t70 ,t75 ,t76 ,t77 ,t78 ,t79 ,t80 ,t81 ,t82 ,t83 ,t84 ,t85 ,t86 ,t87 ,t88 ,t89 ,t90 ,t71 ,t72 ,t73 ,t74 ,t91 ,t92 ,t93 ,t94 ,t95 ,t96 ,t97 ,t98 ,t99 ,t100 ,t101 ,t102 ,t103 ,t104 ,t105 ,t106 ,t107 ,t108 ,t109 ,t110 ,t111 ,t112 ,t113 ,t114 ,t115 ,t116 ,t117 ,t118 ,t119 ,t124 ,t125 ,t126 ,t127 ,t128 ,t129 ,t130 ,t131 ,t132 ,t133 ,t134 ,t135 ,t136 ,t137 ,t138 ,t139 ,t120 ,t121 ,t122 ,t123 ,t140 ,t141 ,t142 ,t143 ,t144 ,t145 ,t146 ;
+	t5 = 1.0/a;
+	t6 = 1.0/b;
+	t7 = d*d;
+	t8 = e*e;
+	t9 = f*f;
+	t10 = t7+t8+t9;
+	t11 = 1.0/sqrt(t10);
+	t12 = r1*r1;
+	t13 = r2*r2;
+	t14 = r3*r3;
+	t15 = t12+t13+t14+4.0;
+	t16 = 1.0/t15;
+	t17 = 1.0/(t15*t15);
+	t18 = a*e*4.0;
+	t19 = b*t1*4.0;
+	t20 = a*t2*t12;
+	t21 = a*t2*t14;
+	t22 = b*t1*t12;
+	t23 = a*d*r3*4.0;
+	t24 = b*e*r3*4.0;
+	t25 = a*r1*t3*4.0;
+	t26 = b*r2*t3*4.0;
+	t27 = a*e*t13;
+	t28 = b*d*t13;
+	t29 = b*d*t14;
+	t30 = a*d*r1*r2*2.0;
+	t31 = a*f*r2*r3*2.0;
+	t32 = b*r1*r2*t2*2.0;
+	t33 = b*r1*r3*t3*2.0;
+	t35 = b*d*4.0;
+	t36 = a*t2*4.0;
+	t37 = a*t2*t13;
+	t38 = b*t1*t13;
+	t39 = b*t1*t14;
+	t40 = a*f*r1*4.0;
+	t41 = b*f*r2*4.0;
+	t42 = a*r3*t1*4.0;
+	t43 = b*r3*t2*4.0;
+	t44 = a*e*t12;
+	t45 = b*d*t12;
+	t46 = a*e*t14;
+	t47 = b*e*r1*r2*2.0;
+	t48 = b*f*r1*r3*2.0;
+	t49 = a*r1*r2*t1*2.0;
+	t50 = a*r2*r3*t3*2.0;
+	t34 = t18+t19+t20+t21+t22+t23+t24+t25+t26+t27+t28+t29+t30+t31+t32+t33-t35-t36-t37-t38-t39-t40-t41-t42-t43-t44-t45-t46-t47-t48-t49-t50;
+	t51 = b*e*4.0;
+	t52 = b*d*r3*2.0;
+	t53 = b*r1*t3*2.0;
+	t54 = 1.0/c;
+	t55 = b*f*4.0;
+	t56 = c*t2*4.0;
+	t57 = b*t3*t12;
+	t58 = b*t3*t13;
+	t59 = c*t2*t13;
+	t60 = b*e*r1*4.0;
+	t61 = c*f*r1*4.0;
+	t62 = b*r2*t1*4.0;
+	t63 = c*r3*t1*4.0;
+	t64 = c*e*t12;
+	t65 = b*f*t14;
+	t66 = c*e*t14;
+	t67 = b*d*r1*r3*2.0;
+	t68 = b*e*r2*r3*2.0;
+	t69 = c*r1*r2*t1*2.0;
+	t70 = c*r2*r3*t3*2.0;
+	t75 = c*e*4.0;
+	t76 = b*t3*4.0;
+	t77 = b*t3*t14;
+	t78 = c*t2*t12;
+	t79 = c*t2*t14;
+	t80 = b*d*r2*4.0;
+	t81 = c*d*r3*4.0;
+	t82 = b*r1*t2*4.0;
+	t83 = c*r1*t3*4.0;
+	t84 = b*f*t12;
+	t85 = b*f*t13;
+	t86 = c*e*t13;
+	t87 = c*d*r1*r2*2.0;
+	t88 = c*f*r2*r3*2.0;
+	t89 = b*r1*r3*t1*2.0;
+	t90 = b*r2*r3*t2*2.0;
+	t71 = t55+t56+t57+t58+t59+t60+t61+t62+t63+t64+t65+t66+t67+t68+t69+t70-t75-t76-t77-t78-t79-t80-t81-t82-t83-t84-t85-t86-t87-t88-t89-t90;
+	t72 = b*d*r1*2.0;
+	t73 = b*e*r2*2.0;
+	t74 = b*f*r3*2.0;
+	t91 = b*r2*4.0;
+	t92 = b*r1*r3*2.0;
+	t93 = b*t13;
+	t94 = b*t14;
+	t95 = c*r1*t1*2.0;
+	t96 = c*r2*t2*2.0;
+	t97 = c*r3*t3*2.0;
+	t98 = a*f*4.0;
+	t99 = c*t1*4.0;
+	t100 = a*d*4.0;
+	t101 = c*f*4.0;
+	t102 = a*f*r2*2.0;
+	t103 = c*e*r1*2.0;
+	t104 = a*r3*t2*2.0;
+	t105 = c*r2*t1*2.0;
+	t106 = a*t3*t12;
+	t107 = a*t3*t13;
+	t108 = c*t1*t12;
+	t109 = a*e*r1*4.0;
+	t110 = c*e*r3*4.0;
+	t111 = a*r2*t1*4.0;
+	t112 = c*r2*t3*4.0;
+	t113 = c*d*t13;
+	t114 = a*f*t14;
+	t115 = c*d*t14;
+	t116 = a*d*r1*r3*2.0;
+	t117 = a*e*r2*r3*2.0;
+	t118 = c*r1*r2*t2*2.0;
+	t119 = c*r1*r3*t3*2.0;
+	t124 = c*d*4.0;
+	t125 = a*t3*4.0;
+	t126 = a*t3*t14;
+	t127 = c*t1*t13;
+	t128 = c*t1*t14;
+	t129 = a*d*r2*4.0;
+	t130 = c*f*r2*4.0;
+	t131 = a*r1*t2*4.0;
+	t132 = c*r3*t2*4.0;
+	t133 = a*f*t12;
+	t134 = c*d*t12;
+	t135 = a*f*t13;
+	t136 = c*e*r1*r2*2.0;
+	t137 = c*f*r1*r3*2.0;
+	t138 = a*r1*r3*t1*2.0;
+	t139 = a*r2*r3*t2*2.0;
+	t120 = t98+t99+t106+t107+t108+t109+t110+t111+t112+t113+t114+t115+t116+t117+t118+t119-t124-t125-t126-t127-t128-t129-t130-t131-t132-t133-t134-t135-t136-t137-t138-t139;
+	t121 = a*r1*t1*2.0;
+	t122 = a*r2*t2*2.0;
+	t123 = a*r3*t3*2.0;
+	t140 = c*t12;
+	t141 = c*t14;
+	t142 = a*r1*4.0;
+	t143 = c*r3*4.0;
+	t144 = c*r1*r2*2.0;
+	t145 = a*4.0;
+	t146 = a*t13;
+	A0(0,0) = t5*t6*t11*t16*(t72+t73+t74+t98-a*t3*4.0-a*d*r2*2.0+a*e*r1*2.0-a*r1*t2*2.0+a*r2*t1*2.0-b*r1*t1*2.0-b*r2*t2*2.0-b*r3*t3*2.0)+r1*t5*t6*t11*t17*t34*2.0;
+	A0(0,1) = t5*t6*t11*t16*(t55+t121+t122+t123-b*t3*4.0-a*d*r1*2.0-a*e*r2*2.0-b*d*r2*2.0+b*e*r1*2.0-a*f*r3*2.0-b*r1*t2*2.0+b*r2*t1*2.0)+r2*t5*t6*t11*t17*t34*2.0;
+	A0(0,2) = -t5*t6*t11*t16*(t51+t52+t53+t100+t102+t104-a*t1*4.0-b*t2*4.0-a*e*r3*2.0-b*f*r1*2.0-a*r2*t3*2.0-b*r3*t1*2.0)+r3*t5*t6*t11*t17*t34*2.0;
+	A0(0,3) = t5*t6*t11*t16*(b*-4.0+t93+t94+a*r3*4.0-b*t12+a*r1*r2*2.0);
+	A0(0,4) = t5*t6*t11*t16*(t145+t146+b*r3*4.0-a*t12-a*t14-b*r1*r2*2.0);
+	A0(0,5) = -t5*t6*t11*t16*(t91+t92+t142-a*r2*r3*2.0);
+	A0(1,0) = -t6*t11*t16*t54*(t51+t52+t53+t101+t103+t105-b*t2*4.0-c*t3*4.0-c*d*r2*2.0-b*f*r1*2.0-b*r3*t1*2.0-c*r1*t2*2.0)+r1*t6*t11*t17*t54*t71*2.0;
+	A0(1,1) = -t6*t11*t16*t54*(t19-t35+t95+t96+t97-c*d*r1*2.0+b*e*r3*2.0-b*f*r2*2.0-c*e*r2*2.0-c*f*r3*2.0+b*r2*t3*2.0-b*r3*t2*2.0)+r2*t6*t11*t17*t54*t71*2.0;
+	A0(1,2) = -t6*t11*t16*t54*(t72+t73+t74+t99-c*d*4.0+c*e*r3*2.0-c*f*r2*2.0-b*r1*t1*2.0-b*r2*t2*2.0-b*r3*t3*2.0+c*r2*t3*2.0-c*r3*t2*2.0)+r3*t6*t11*t17*t54*t71*2.0;
+	A0(1,3) = -t6*t11*t16*t54*(t91-t92+t143+t144);
+	A0(1,4) = t6*t11*t16*t54*(c*-4.0+t140+t141+b*r1*4.0-c*t13+b*r2*r3*2.0);
+	A0(1,5) = t6*t11*t16*t54*(b*4.0-t93+t94+c*r1*4.0-b*t12-c*r2*r3*2.0);
+	A0(2,0) = t5*t11*t16*t54*(t18-t36+t95+t96+t97+a*d*r3*2.0-a*f*r1*2.0-c*d*r1*2.0-c*e*r2*2.0-c*f*r3*2.0+a*r1*t3*2.0-a*r3*t1*2.0)-r1*t5*t11*t17*t54*t120*2.0;
+	A0(2,1) = -t5*t11*t16*t54*(t100+t101+t102+t103+t104+t105-a*t1*4.0-c*t3*4.0-a*e*r3*2.0-c*d*r2*2.0-a*r2*t3*2.0-c*r1*t2*2.0)-r2*t5*t11*t17*t54*t120*2.0;
+	A0(2,2) = -t5*t11*t16*t54*(t56-t75+t121+t122+t123-a*d*r1*2.0-a*e*r2*2.0-a*f*r3*2.0-c*d*r3*2.0+c*f*r1*2.0-c*r1*t3*2.0+c*r3*t1*2.0)-r3*t5*t11*t17*t54*t120*2.0;
+	A0(2,3) = t5*t11*t16*t54*(c*4.0+t140-t141+a*r2*4.0-c*t13-a*r1*r3*2.0);
+	A0(2,4) = -t5*t11*t16*t54*(t142+t143-t144+a*r2*r3*2.0);
+	A0(2,5) = t5*t11*t16*t54*(-t145+t146+c*r2*4.0+a*t12-a*t14+c*r1*r3*2.0);
+
+
+	return A0;
+}
+MatrixXd jacobianForRotationAndTransition_(const MatrixXd& parameters,const MatrixXd& variables)
 {
 
 	double a,b,c,d,e,f,t1,t2,t3,r1,r2,r3;
@@ -1472,7 +1986,7 @@ MatrixXd jacobianForPointUnitLength(const vector<MatrixXd>& input)
 	return jacobianForPointUnitLength(parameters,variables);
 
 }
-
+/*
 MatrixXd estimateCameraParameter(const MatrixXd& projPoints,const MatrixXd& points)
 {
 	assert(projPoints.rows()==points.rows());
@@ -1483,7 +1997,7 @@ MatrixXd estimateCameraParameter(const MatrixXd& projPoints,const MatrixXd& poin
 	MatrixXd obj_vals=MatrixXd::Zero(1,projPoints.rows()*3);
 	MatrixXd para=MatrixXd::Zero(1,6);
 	return	levenbergM_simple(dataset,obj_vals,functionForRotationAndTransition,jacobianForRotationAndTransition,para);
-}
+}*/
 
 
 MatrixXd estimateCameraParameter(const MatrixXd& projPoints,const vector<int>& ind1,const MatrixXd& points,const vector<int>& ind2)

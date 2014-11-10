@@ -201,7 +201,7 @@ void testLM()
 		, 0.5691, 0.6805, 0.4615
 		, 0.4534, 0.6298, 0.6306;
 
-	cout<<estimateCameraParameter(prjp,pnts);
+//	cout<<estimateCameraParameter(prjp,pnts);
 }
 
 void testInter()
