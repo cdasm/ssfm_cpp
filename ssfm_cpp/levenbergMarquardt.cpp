@@ -183,6 +183,8 @@ MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vec
 			J.setFromTriplets(tosetJ.begin(),tosetJ.end());
 			update_dis_init(para_est);
 
+			cout<<dis_init.transpose()<<endl;
+			getchar();
 
 			d=obj_vals-dis_init;
 	//		J.transpose();
@@ -192,6 +194,7 @@ MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vec
 				e=(d*d.transpose())(0,0);
 		}
 		cout<<"current error is:"<<e<<endl;
+		getchar();
 		H_lm=H+MatrixXd::Identity(parameterNumber,parameterNumber)*lambda;
 		dp=d*J*H_lm.inverse();
 		//VectorXd tosdj=d*J;

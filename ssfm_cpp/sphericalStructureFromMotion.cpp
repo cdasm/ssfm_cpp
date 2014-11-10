@@ -1048,6 +1048,7 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 	bundlePara1[1]=cameraType::_unitLength;
 
 	cout<<"bundle adjustment for cameras and points before camera number "<<"1"<<endl;
+	getchar();
 	bundleAdjustment(bundlePara1);
 	reconstructPoints(1);
 
