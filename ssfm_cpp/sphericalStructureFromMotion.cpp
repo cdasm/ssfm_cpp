@@ -312,7 +312,7 @@ MatrixXd bestPointCoefficient(double a,double b,double c,double d,double e,doubl
 	return A0;
 }
 
-MatrixXd pointProjectError(const MatrixXd& pU,const MatrixXd& pnt)
+MatrixXd pointProjectError_(const MatrixXd& pU,const MatrixXd& pnt)
 {
 	double p1,p2,p3,u1,u2,u3;
 	double x,y,z;
@@ -346,6 +346,75 @@ MatrixXd pointProjectError(const MatrixXd& pU,const MatrixXd& pnt)
 	A0(0,0) = t11*(t6-t2*t12);
 	A0(0,1) = -t11*(t6-t4*t13);
 	A0(0,2) = t11*(t2*t12-t4*t13);
+
+	return A0;
+}
+
+
+
+MatrixXd pointProjectError(const MatrixXd& pU,const MatrixXd& pnt)
+{
+	double p1,p2,p3,u1,u2,u3;
+	double x,y,z;
+
+	p1=pU(0,0);
+	p2=pU(0,1);
+	p3=pU(0,2);
+	
+	u1=pU(0,3);
+	u2=pU(0,4);
+	u3=pU(0,5);
+
+	x=pnt(0,0);
+	y=pnt(0,1);
+	z=pnt(0,2);
+
+	MatrixXd A0(1,3);
+	double t2 ,t3 ,t4 ,t5 ,t6 ,t7 ,t8 ,t9 ;
+	t2 = 1.0/u2;
+	t3 = p2-y;
+	t4 = t2*t3;
+	t5 = 1.0/u1;
+	t6 = p1-x;
+	t7 = 1.0/u3;
+	t8 = p3-z;
+	t9 = t7*t8;
+	A0(0,0) = t4-t5*t6;
+	A0(0,1) = -t4+t9;
+	A0(0,2) = -t9+t5*t6;
+
+	return A0;
+}
+
+
+MatrixXd pointProjectErrorJac0bian_(const MatrixXd& pU,const MatrixXd& pnt)
+{
+	double p1,p2,p3,u1,u2,u3;
+	double x,y,z;
+
+	p1=pU(0,0);
+	p2=pU(0,1);
+	p3=pU(0,2);
+	
+	u1=pU(0,3);
+	u2=pU(0,4);
+	u3=pU(0,5);
+
+	x=pnt(0,0);
+	y=pnt(0,1);
+	z=pnt(0,2);
+
+	MatrixXd A0(3,3);
+	double t2 ,t3 ,t4 ;
+	t2 = 1.0/u2;
+	t3 = 1.0/u1;
+	t4 = 1.0/u3;
+	A0(0,0) = t3;
+	A0(0,1) = -t2;
+	A0(1,1) = t2;
+	A0(1,2) = -t4;
+	A0(2,0) = -t3;
+	A0(2,2) = t4;
 	return A0;
 }
 
@@ -410,6 +479,7 @@ MatrixXd pointProjectErrorJac0bian(const MatrixXd& pU,const MatrixXd& pnt)
 	return A0;
 }
 
+
 MatrixXd bestPoint(const MatrixXd& p, const MatrixXd& u)
 {
 	MatrixXd coefficients= MatrixXd::Zero(3,4);
@@ -468,7 +538,10 @@ MatrixXd bestPoint(const MatrixXd& p, const MatrixXd& u)
 
 	MatrixXd obj_vals=MatrixXd(1,3*p.rows());
 
-	return levenbergM_simple(dataset,obj_vals,pointProjectError,pointProjectErrorJac0bian,result);
+	auto good=levenbergM_simple(dataset,obj_vals,pointProjectError,pointProjectErrorJac0bian,result);
+	cout<<"from "<<result<<" become "<<good<<endl;
+	getchar();
+	return good;
 
 }
 
@@ -1099,7 +1172,7 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 	
 }
 
-MatrixXd functionForRotationAndTransition(const MatrixXd& parameters,const MatrixXd& variables)
+MatrixXd functionForRotationAndTransition__(const MatrixXd& parameters,const MatrixXd& variables)
 {
 	double a,b,c,d,e,f,t1,t2,t3,r1,r2,r3;//% a b c coordinates of projpoints, d e f coordinates of points r1 r2 r3, rotation parameters t1 t2 t3 transition parameters
 	a=parameters(0,0) ;
@@ -1168,7 +1241,7 @@ MatrixXd functionForRotationAndTransition(const MatrixXd& parameters,const Matri
 }
 
 
-MatrixXd functionForRotationAndTransition_(const MatrixXd& parameters,const MatrixXd& variables)
+MatrixXd functionForRotationAndTransition(const MatrixXd& parameters,const MatrixXd& variables)
 {
 	double a,b,c,d,e,f,t1,t2,t3,r1,r2,r3;//% a b c coordinates of projpoints, d e f coordinates of points r1 r2 r3, rotation parameters t1 t2 t3 transition parameters
 	a=parameters(0,0) ;
@@ -1203,16 +1276,6 @@ MatrixXd functionForRotationAndTransition_(const MatrixXd& parameters,const Matr
 
 
 
-MatrixXd functionForRotationAndTransitionUnitLength_(const MatrixXd& parameters,const MatrixXd& variables2)
-{
-	MatrixXd variable(1,6);
-	variable.block(0,0,1,3)=variables2.block(0,0,1,3);
-	variable.block(0,3,1,3)=transitionFrom2Para(variables2.block(0,3,1,2));
-
-	return functionForRotationAndTransition(parameters,variable);
-}
-
-
 MatrixXd functionForRotationAndTransitionUnitLength(const MatrixXd& parameters,const MatrixXd& variables2)
 {
 	MatrixXd variable(1,6);
@@ -1222,7 +1285,65 @@ MatrixXd functionForRotationAndTransitionUnitLength(const MatrixXd& parameters,c
 	return functionForRotationAndTransition(parameters,variable);
 }
 
+
+MatrixXd functionForRotationAndTransitionUnitLength__(const MatrixXd& parameters,const MatrixXd& variables2)
+{
+	MatrixXd variable(1,6);
+	variable.block(0,0,1,3)=variables2.block(0,0,1,3);
+	variable.block(0,3,1,3)=transitionFrom2Para(variables2.block(0,3,1,2));
+
+	return functionForRotationAndTransition(parameters,variable);
+}
+
 MatrixXd jacobianForPointUnitLength(const MatrixXd& parameters,const MatrixXd& variables)
+{
+	double a,b,c,d,e,f,t1,t200,r1,r2,r3;
+	a=parameters(0,0) ;
+	b=parameters(0,1) ;
+	c=parameters(0,2) ;
+	d=parameters(0,3) ;
+	e=parameters(0,4) ;
+	f=parameters(0,5) ;
+
+	r1=variables(0,0) ;
+	r2=variables(0,1) ;
+	r3=variables(0,2) ;
+	t1=variables(0,3) ;
+	t200=variables(0,4) ;
+	MatrixXd A0(3,3);
+	double t2 ,t3 ,t4 ,t5 ,t6 ,t7 ,t8 ,t9 ,t10 ,t11 ,t12 ,t13 ,t14 ,t15 ,t16 ,t17 ,t18 ,t19 ,t20 ;
+	t2 = r1*r1;
+	t3 = r2*r2;
+	t4 = r3*r3;
+	t5 = 1.0/a;
+	t6 = 1.0/b;
+	t7 = t2+t3+t4+4.0;
+	t8 = 1.0/t7;
+	t9 = b*r2*2.0;
+	t10 = b*r1*r3;
+	t11 = 1.0/c;
+	t12 = b*t3;
+	t13 = b*t4;
+	t14 = c*t2;
+	t15 = c*t4;
+	t16 = a*r1*2.0;
+	t17 = c*r3*2.0;
+	t18 = c*r1*r2;
+	t19 = a*4.0;
+	t20 = a*t3;
+	A0(0,0) = -t5*t6*t8*(b*-4.0+t12+t13+a*r3*4.0-b*t2+a*r1*r2*2.0);
+	A0(0,1) = -t5*t6*t8*(t19+t20+b*r3*4.0-a*t2-a*t4-b*r1*r2*2.0);
+	A0(0,2) = t5*t6*t8*(t9+t10+t16-a*r2*r3)*2.0;
+	A0(1,0) = t6*t8*t11*(t9-t10+t17+t18)*2.0;
+	A0(1,1) = -t6*t8*t11*(c*-4.0+t14+t15+b*r1*4.0-c*t3+b*r2*r3*2.0);
+	A0(1,2) = -t6*t8*t11*(b*4.0-t12+t13+c*r1*4.0-b*t2-c*r2*r3*2.0);
+	A0(2,0) = -t5*t8*t11*(c*4.0+t14-t15+a*r2*4.0-c*t3-a*r1*r3*2.0);
+	A0(2,1) = t5*t8*t11*(t16+t17-t18+a*r2*r3)*2.0;
+	A0(2,2) = -t5*t8*t11*(-t19+t20+a*t2+c*r2*4.0-a*t4+c*r1*r3*2.0);
+	return A0;
+}
+
+MatrixXd jacobianForPointUnitLength__(const MatrixXd& parameters,const MatrixXd& variables)
 {
 	double a,b,c,d,e,f,t1,t2,r1,r2,r3;
 	a=parameters(0,0) ;
@@ -1352,7 +1473,7 @@ MatrixXd jacobianForPointUnitLength(const MatrixXd& parameters,const MatrixXd& v
 	return A0;
 }
 
-MatrixXd jacobianForPoint(const MatrixXd& parameters,const MatrixXd& variables)
+MatrixXd jacobianForPoint__(const MatrixXd& parameters,const MatrixXd& variables)
 {
 
 	double a,b,c,d,e,f,t1,t2,t3,r1,r2,r3;
@@ -1454,7 +1575,7 @@ MatrixXd jacobianForPoint(const MatrixXd& parameters,const MatrixXd& variables)
 
 	return A0;
 }
-MatrixXd jacobianForPoint_(const MatrixXd& parameters,const MatrixXd& variables)
+MatrixXd jacobianForPoint(const MatrixXd& parameters,const MatrixXd& variables)
 {
 
 	double a,b,c,d,e,f,t1,t2,t3,r1,r2,r3;
@@ -1490,7 +1611,7 @@ MatrixXd jacobianForPoint_(const MatrixXd& parameters,const MatrixXd& variables)
 	jsym(2,2) = -(a*-4.0+c*r2*4.0+a*(r1*r1)+a*(r2*r2)-a*(r3*r3)+c*r1*r3*2.0)*mt2;
 	return jsym;
 }
-MatrixXd jacobianForRotationAndTransitionUnitLength(const MatrixXd& parameters,const MatrixXd& variables)
+MatrixXd jacobianForRotationAndTransitionUnitLength__(const MatrixXd& parameters,const MatrixXd& variables)
 {
 
 	double a,b,c,d,e,f,t1,t2,r1,r2,r3;
@@ -1727,7 +1848,7 @@ MatrixXd jacobianForRotationAndTransitionUnitLength(const MatrixXd& parameters,c
 	return A0;
 }
 
-MatrixXd jacobianForRotationAndTransitionUnitLength_(const MatrixXd& parameters,const MatrixXd& variables)
+MatrixXd jacobianForRotationAndTransitionUnitLength(const MatrixXd& parameters,const MatrixXd& variables)
 {
 
 	double a,b,c,d,e,f,t1,t2,r1,r2,r3;
@@ -1750,7 +1871,7 @@ MatrixXd jacobianForRotationAndTransitionUnitLength_(const MatrixXd& parameters,
 }
 
 
-MatrixXd jacobianForRotationAndTransition(const MatrixXd& parameters,const MatrixXd& variables)
+MatrixXd jacobianForRotationAndTransition__(const MatrixXd& parameters,const MatrixXd& variables)
 {
 
 	double a,b,c,d,e,f,t1,t2,t3,r1,r2,r3;
@@ -1900,7 +2021,7 @@ MatrixXd jacobianForRotationAndTransition(const MatrixXd& parameters,const Matri
 
 	return A0;
 }
-MatrixXd jacobianForRotationAndTransition_(const MatrixXd& parameters,const MatrixXd& variables)
+MatrixXd jacobianForRotationAndTransition(const MatrixXd& parameters,const MatrixXd& variables)
 {
 
 	double a,b,c,d,e,f,t1,t2,t3,r1,r2,r3;
