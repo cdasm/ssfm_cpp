@@ -42,7 +42,7 @@ MatrixXd imageCordinate2Phere(vector<T> coordinates,vector<int> imageSize)
 
 
 
-auto collectFromPairwiseMatching(const string& featureLst,const string& matchLst,vector<vector<vector<int>>>& feas,vector<map<int,int> >& sth, vector<unordered_set<int> >& contain,vector<vector<int> >& featureIsPoint )-> vector<pair<vector<int> ,  vector<int> > >;
+auto collectFromPairwiseMatching(const string& featureLst,const string& matchLst,vector<vector<vector<int>>>& feas,vector<map<int,int> >& sth, vector<unordered_set<int> >& contain,vector<vector<int> >& featureIsPoint )-> vector<unordered_map<int,int> >;
 
 //these are the types for how the cameras are defined during bundle adjustment
 //_static means the projections on the camera are considered while the position of the camera will not change

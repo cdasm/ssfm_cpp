@@ -2,12 +2,12 @@
 
 
 template<class Pnt>
-auto incrementalTrajectoryDetect(const vector<vector<Pnt> >& features, vector<map<int,int>>& sth)->   vector< pair< vector<int> ,  vector<int>>>
+   vector< unordered_map<int,int> > incrementalTrajectoryDetect(const vector<vector<Pnt> >& features, vector<map<int,int>>& twoFrameCorrespondences)
 {
 
 
 
-	vector<pair<vector<int> ,vector<int> > > result;
+	vector<unordered_map<int,int> > result;
 
 	vector<vector<bool> > markers(features.size());	
 
@@ -16,50 +16,53 @@ auto incrementalTrajectoryDetect(const vector<vector<Pnt> >& features, vector<ma
 		markers[i].resize(features[i].size(),false);
 	}
 
+
+	
 	for (int i = 0; i < features.size()-1; i++)
 	{
 		if(i%30==0)
 			cout<<"processing frame " <<i<<endl;
+
+
 		for (int j = 0; j < markers[i].size(); j++)
 		{
 			if(!markers[i][j])
 			{
-				vector<int> stend;
-				vector<int> traj;
 		
-				stend.push_back(i);
-				traj.push_back(j);
+				unordered_map<int,int> pntme;
+			
+				pntme[i]=j;
 				markers[i][j]=true;
 				
 				int cur_frame=i;
 				int cur_index=j;
 		
-				while( (cur_frame<features.size()-1) && (sth[cur_frame].count(cur_index)))
+				while( (cur_frame<features.size()-1) && (twoFrameCorrespondences[cur_frame].count(cur_index)))
 				{
-					int indd=sth[cur_frame][cur_index];
-					stend.push_back(cur_frame+1);		
-					traj.push_back(indd);
-
+					int indd=twoFrameCorrespondences[cur_frame][cur_index];
+					pntme[cur_frame+1]=indd;
 					markers[cur_frame+1][indd]=true;
 				
 					cur_index=indd;
 					++cur_frame;			
 				}
-				if(stend.size()>1)
+				if(pntme.size()>1)
 				{
 
-					result.push_back(make_pair(stend,traj));
+					result.push_back(pntme);
 				}
 			}
 		}
 	}
+	
+	
 	cout<<"feature tracing finished"<<endl;
 	return result;
 }
 
 
 
-auto collectFromPairwiseMatching(const string& featureLst,const string& matchLst,vector<vector<vector<int>>>& feas,vector<map<int,int> >& sth,vector<unordered_set<int> >& contain,vector<vector<int> >& featureIsPoint)->  vector<pair<vector<int> ,  vector<int> > >
+auto collectFromPairwiseMatching(const string& featureLst,const string& matchLst,vector<vector<vector<int>>>& feas,vector<map<int,int> >& sth,vector<unordered_set<int> >& contain,vector<vector<int> >& featureIsPoint)->  vector<unordered_map<int,int> >
 {
 
 	auto feaNames=fileIOclass::InVectorString(featureLst);
@@ -89,16 +92,17 @@ auto collectFromPairwiseMatching(const string& featureLst,const string& matchLst
 			sth[i][correpss[i][j][0]]=correpss[i][j][1];
 	}
 
-	auto trajs=incrementalTrajectoryDetect(feas,sth);
+	   vector< unordered_map<int,int> > trajs=incrementalTrajectoryDetect(feas,sth);
 	
 	contain.resize(feas.size());
 
 	for (int i = 0; i < trajs.size(); i++)
 	{
-		for (int j =0;j < trajs[i].first.size(); j++)
+
+		for (auto &s:trajs[i])
 		{
-			contain[ trajs[i].first[j] ].insert(i);
-			featureIsPoint[ trajs[i].first[j] ] [ trajs[i].second[j] ]=i;
+			contain[s.first].insert(i);
+			featureIsPoint[s.first][s.second]=i;
 		}
 	}
 
@@ -678,8 +682,16 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 	vector<unordered_set<int> > contain;
 	vector<vector<int> > featureIsPoint;
 
-	auto trajectories=collectFromPairwiseMatching(featureFileName,matchFileName,features,correspondences,contain,featureIsPoint);
+    vector< unordered_map<int,int> > trajectories=collectFromPairwiseMatching(featureFileName,matchFileName,features,correspondences,contain,featureIsPoint);
 
+	vector<unordered_map<int,bool> > projectionsValid(trajectories.size());
+
+	for ( int i=0;i<trajectories.size();++i)
+	{
+		for(auto&w:trajectories[i])
+			projectionsValid[i][w.first]=false;
+
+	}
 
 	MatrixXd transitions(features.size(),3);
 
@@ -821,12 +833,12 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 						int prjCount=0;
 
 						unordered_set<int> curPrj;
-						for (int i = 0; i < trajectories[w].first.size(); i++)
+						for (auto &mi: trajectories[w])
 						{
-							if(lbundlePara.count(trajectories[w].first[i]))
+							if(lbundlePara.count(mi.first))
 							{
 								++prjCount;
-								curPrj.insert(i);
+								curPrj.insert(mi.first);
 							}
 						}
 
@@ -839,8 +851,8 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 							}
 							for (auto& x:curPrj)
 							{
-								int curPrjCamera=trajectories[w].first[x];
-
+							//	int curPrjCamera=trajectories[w].first[x];
+								int curPrjCamera=x;
 								
 
 
@@ -960,7 +972,7 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 									break;
 								}
 								++totalProjCount;
-								allProjs.push_back(make_pair( trajectories[w].first[x],trajectories[w].second[x]));
+								allProjs.push_back(make_pair( x,trajectories[w][x]));
 							}
 							pntIndx.insert(w);
 						}
