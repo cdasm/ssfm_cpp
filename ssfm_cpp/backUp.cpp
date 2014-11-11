@@ -283,6 +283,75 @@ MatrixXd functionForRotationAndTransitionUnitLength_(const MatrixXd& parameters,
 	return functionForRotationAndTransition(parameters,variable);
 }
 
+MatrixXd functionForRotationAndTransition__(const MatrixXd& parameters,const MatrixXd& variables)
+{
+	double a,b,c,d,e,f,t1,t2,t3,r1,r2,r3;//% a b c coordinates of projpoints, d e f coordinates of points r1 r2 r3, rotation parameters t1 t2 t3 transition parameters
+	a=parameters(0,0) ;
+	b=parameters(0,1) ;
+	c=parameters(0,2) ;
+	d=parameters(0,3) ;
+	e=parameters(0,4) ;
+	f=parameters(0,5) ;
+
+	r1=variables(0,0) ;
+	r2=variables(0,1) ;
+	r3=variables(0,2) ;
+	t1=variables(0,3) ;
+	t2=variables(0,4) ;
+	t3=variables(0,5) ;
+	MatrixXd A0(1,3);
+	double t5 ,t6 ,t7 ,t8 ,t9 ,t10 ,t11 ,t12 ,t13 ,t14 ,t15 ,t16 ,t17 ,t18 ,t19 ,t20 ,t21 ,t22 ,t31 ,t23 ,t24 ,t32 ,t25 ,t26 ,t27 ,t28 ,t29 ,t30 ,t33 ,t34 ,t35 ,t36 ,t37 ,t38 ,t39 ,t40 ,t41 ,t42 ,t43 ,t44 ,t45 ,t46 ,t47 ,t48 ;
+	t5 = r1*r1;
+	t6 = t5*(1.0/4.0);
+	t7 = r2*r2;
+	t8 = t7*(1.0/4.0);
+	t9 = r3*r3;
+	t10 = t9*(1.0/4.0);
+	t11 = t6+t8+t10+1.0;
+	t12 = 1.0/t11;
+	t13 = r3*t12;
+	t14 = d-t1;
+	t15 = f-t3;
+	t16 = t6+t8+t10-1.0;
+	t17 = e-t2;
+	t18 = 1.0/b;
+	t19 = r1*r2*t12*(1.0/2.0);
+	t20 = t13+t19;
+	t21 = t14*t20;
+	t22 = r1*t12;
+	t31 = r2*r3*t12*(1.0/2.0);
+	t23 = t22-t31;
+	t24 = t7*t12*(1.0/2.0);
+	t32 = t12*t16;
+	t25 = t24-t32;
+	t26 = t17*t25;
+	t27 = t21+t26-t15*t23;
+	t28 = t18*t27;
+	t29 = r2*t12;
+	t30 = r1*r3*t12*(1.0/2.0);
+	t33 = t14*t14;
+	t34 = t17*t17;
+	t35 = t15*t15;
+	t36 = t33+t34+t35;
+	t37 = 1.0/sqrt(t36);
+	t38 = 1.0/a;
+	t39 = t29+t30;
+	t40 = t15*t39;
+	t41 = t5*t12*(1.0/2.0);
+	t42 = 1.0/c;
+	t43 = t29-t30;
+	t44 = t14*t43;
+	t45 = t22+t31;
+	t46 = t32-t9*t12*(1.0/2.0);
+	t47 = t15*t46;
+	t48 = t42*(t44+t47-t17*t45);
+	A0(0,0) = -t37*(t28-t38*(t40-t17*(t13-r1*r2*t12*(1.0/2.0))+t14*(t41-t12*t16)));
+	A0(0,1) = t37*(t28+t48);
+	A0(0,2) = -t37*(t48-t38*(-t40+t17*(t13-t19)+t14*(t32-t41)));
+	return A0;
+}
+
+
 
 MatrixXd functionForRotationAndTransitionUnitLength__(const MatrixXd& parameters,const MatrixXd& variables2)
 {

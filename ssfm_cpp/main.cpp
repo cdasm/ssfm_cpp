@@ -284,16 +284,12 @@ void testInverseWithSolve()
 
 void testBestPoint()
 {
-	MatrixXd a(4,3),b(4,3);
-	a<<0.4868,    0.5085,    0.6443,
-    0.4359 ,   0.5108   , 0.3786,
-    0.4468  ,  0.8176  ,  0.8116,
-    0.3063   , 0.7948 ,   0.5328;
+	MatrixXd a(2,3),b(2,3);
+	a<< 0  ,       0 ,        0,
+    0.3793,    0.2698 ,   2.6540;
 
-	b<< 0.3507,    0.6225 ,   0.4709,
-    0.9390   , 0.5870    ,0.2305,
-    0.8759   , 0.2077   , 0.8443,
-    0.5502   , 0.3012  ,  0.1948;
+	b<<  0.5960 ,   0.5603  ,  0.5752,
+    0.6211  ,  0.5869 ,   0.5194;
 	bestPoint(a,b);
 }
 
@@ -313,7 +309,7 @@ int main()
 	
 	//auto pointOnFirst2Frames=set_intersect(contain[0],contain[1]);
 
-	auto pointsCameras=threeDimensionReconstruction("torb.lst","tmatch.lst");
+	auto pointsCameras=threeDimensionReconstruction("orb.lst","match.lst");
 	ofstream f1;
 	f1.open("points.txt");
 	f1<<get<2>(pointsCameras);
