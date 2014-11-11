@@ -140,6 +140,7 @@
       <AdditionalIncludeDirectories>D:\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <OpenMPSupport>true</OpenMPSupport>
+      <BrowseInformation>true</BrowseInformation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -147,9 +148,13 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <Bscmake>
+      <PreserveSbr>true</PreserveSbr>
+    </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\FileIO\FileIO.cpp" />
+    <ClCompile Include="backUp.cpp" />
     <ClCompile Include="levenbergMarquardt.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="sphericalStructureFromMotion.cpp" />

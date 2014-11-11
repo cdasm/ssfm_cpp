@@ -70,7 +70,7 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 
 MatrixXd bestPoint(const MatrixXd& p, const MatrixXd& u);
 
-
+MatrixXd transitionFrom2Para(const MatrixXd& inp);
 
 MatrixXd functionForRotationAndTransition(const MatrixXd& parameters,const MatrixXd& variables);
 
