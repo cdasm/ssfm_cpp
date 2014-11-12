@@ -229,3 +229,148 @@ MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vec
 
 	return para_est;
 }
+
+
+
+MatrixXd levenbergM_advanced(const vector<MatrixXd>& dataset,const vector<pair<pair<int,int>,vector<pair<dataORParameter,pair<int,int>>>>>& funcDataMap,const vector<pair<pair<int,pair<int,int>>,vector<pair<dataORParameter,pair<int,int>>>>>& jfuncDataMap,const MatrixXd& obj_vals,vector<funcType2>& funcs,vector<funcType2>& jfuncs,MatrixXd& initParameters,int dataNumber,int observationNumber,int maxiter_times)
+{
+	
+	int parameterNumber=initParameters.cols();
+	
+	double lambda=0.01;
+
+	bool updateJ=true;
+	auto para_est=initParameters;
+	auto para_lm=initParameters;
+	
+	MatrixXd dis_init(1,dataNumber*observationNumber);
+
+	SparseMatrix<double> J;//(dataNumber*observationNumber,parameterNumber);//(dataNumber,parameterNumber);
+
+	MatrixXd d=obj_vals;
+	MatrixXd dp(1,parameterNumber);
+	MatrixXd H(parameterNumber,parameterNumber);
+	MatrixXd H_lm(parameterNumber,parameterNumber);
+	double e=-1;
+
+	auto update_dis_init =[&](const MatrixXd& paraHere)
+	{
+		dis_init*=0;
+		for (int i = 0; i < funcDataMap.size(); i++)
+		{
+			vector<MatrixXd> curparas;
+			int funcind=funcDataMap[i].first.first;
+			int sc;
+			sc=funcDataMap[i].first.second;
+			//sc=funcDataMap[i][2];
+			for (int j = 0; j < funcDataMap[i].second.size(); j++)
+			{
+				if(funcDataMap[i].second[j].first==dataORParameter::_data)
+				{
+					pair<int,int> curpair=funcDataMap[i].second[j].second;
+					curparas.push_back(dataset[curpair.first].row(curpair.second));
+				}
+
+				else if(funcDataMap[i].second[j].first==dataORParameter::_parameter)
+				{
+					pair<int,int> curpair=funcDataMap[i].second[j].second;
+					curparas.push_back(paraHere.block(0,curpair.first,1,curpair.second));
+				}
+			}
+
+			
+			MatrixXd upd=funcs[funcind](curparas);
+			
+			dis_init.block(0,sc,1,upd.cols())=upd;
+		}
+	};
+
+	for (int it = 0; it < maxiter_times; it++)
+	{
+		cout<<"iteration Number "<<it<<endl;
+		
+		if (updateJ)
+		{
+			J=SparseMatrix<double>(dataNumber*observationNumber,parameterNumber);
+			vector<Triplet<double> > tosetJ;
+			//for (int i = 0; i < dataNumber; i++)
+			//{
+			//	J.block(i*observationNumber,0,observationNumber,parameterNumber)=jfunc(dataset.row(i),para_est);
+			//}
+
+			for (int i = 0; i < jfuncDataMap.size(); i++)
+			{
+				vector<MatrixXd> curparas;
+				int funcind=jfuncDataMap[i].first.first;
+				int sr, sc;
+				sr=jfuncDataMap[i].first.second.first;
+				sc=jfuncDataMap[i].first.second.second;
+
+
+				for (int j = 0; j < jfuncDataMap[i].second.size(); j++)
+				{
+					if(jfuncDataMap[i].second[j].first==dataORParameter::_data)
+					{
+						pair<int,int> curpair=funcDataMap[i].second[j].second;
+						curparas.push_back(dataset[curpair.first].row(curpair.second));
+					}
+
+					else if(jfuncDataMap[i].second[j].first==dataORParameter::_parameter)
+					{
+						pair<int,int> curpair=funcDataMap[i].second[j].second;
+						curparas.push_back(para_est.block(0,curpair.first,1,curpair.second));
+					}
+				}
+
+				
+				MatrixXd upd=jfuncs[funcind](curparas);
+				
+				auto cursetJ=tosetSparseMatrix(upd,sr,sc);
+				tosetJ.insert(tosetJ.end(),cursetJ.begin(),cursetJ.end());
+			}
+			J.setFromTriplets(tosetJ.begin(),tosetJ.end());
+			update_dis_init(para_est);
+
+			d=obj_vals-dis_init;
+	//		J.transpose();
+			SparseMatrix<double> sH=J.transpose()*J;
+			H= MatrixXd( sH);
+			if(it==0)
+				e=(d*d.transpose())(0,0);
+		}
+		cout<<"current error is:"<<e<<endl;
+		//getchar();
+		H_lm=H+MatrixXd::Identity(parameterNumber,parameterNumber)*lambda;
+		dp=d*J*H_lm.inverse();
+		//VectorXd tosdj=d*J;
+		//VectorXd solution=H_lm.transpose().colPivHouseholderQr().solve(tosdj);
+		//dp=solution.transpose();
+
+		para_lm=para_est+dp;
+		update_dis_init(para_lm);
+
+		d=obj_vals-dis_init;
+		double e_lm=(d*d.transpose())(0,0);
+
+		if(e_lm<e || e<0)
+		{
+		
+			lambda/=10;
+			para_est=para_lm;
+		if(e-e_lm<constrain_on_delta_error)
+				break;
+			e=e_lm;
+			updateJ=true;
+		}
+		else
+		{
+			updateJ=false;
+			lambda*=10;
+			if(lambda>lambda_limit)
+				break;
+		}
+	}
+
+
+	return para_est;
+}
