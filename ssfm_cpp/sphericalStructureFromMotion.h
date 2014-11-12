@@ -10,6 +10,8 @@
 #include "../FileIO/FileInOut.h"
 #include "levenbergMarquardt.h"
 
+#include "bundleFunctionAndJacobian.h"
+
 #include <iostream>
 #include <unordered_map>
 #include <assert.h>
@@ -72,11 +74,7 @@ MatrixXd bestPoint(const MatrixXd& p, const MatrixXd& u);
 
 MatrixXd transitionFrom2Para(const MatrixXd& inp);
 
-MatrixXd functionForRotationAndTransition(const MatrixXd& parameters,const MatrixXd& variables);
 
-MatrixXd jacobianForPoint(const MatrixXd& parameters,const MatrixXd& variables);
-
-MatrixXd jacobianForRotationAndTransition(const MatrixXd& parameters,const MatrixXd& variables);
 
 MatrixXd functionForRotationAndTransition(const vector<MatrixXd>& input);
 
@@ -85,11 +83,7 @@ MatrixXd jacobianForRotationAndTransition(const vector<MatrixXd>& input);
 MatrixXd jacobianForPoint(const vector<MatrixXd>& input);
 
 
-MatrixXd functionForRotationAndTransitionUnitLength(const MatrixXd& parameters,const MatrixXd& variables);
 
-MatrixXd jacobianForPointUnitLength(const MatrixXd& parameters,const MatrixXd& variables);
-
-MatrixXd jacobianForRotationAndTransitionUnitLength(const MatrixXd& parameters,const MatrixXd& variables);
 
 MatrixXd functionForRotationAndTransitionUnitLength(const vector<MatrixXd>& input);
 

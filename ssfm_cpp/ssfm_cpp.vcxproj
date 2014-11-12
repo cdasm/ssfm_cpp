@@ -155,11 +155,13 @@
   <ItemGroup>
     <ClCompile Include="..\FileIO\FileIO.cpp" />
     <ClCompile Include="backUp.cpp" />
+    <ClCompile Include="bundleFunctionAndJacobian.cpp" />
     <ClCompile Include="levenbergMarquardt.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="sphericalStructureFromMotion.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bundleFunctionAndJacobian.h" />
     <ClInclude Include="levenbergMarquardt.h" />
     <ClInclude Include="sphericalStructureFromMotion.h" />
     <ClInclude Include="utinity.h" />
