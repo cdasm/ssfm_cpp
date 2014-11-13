@@ -168,6 +168,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="basicSettings.inl" />
+    <None Include="bundleFuncJacoSettings.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -21,18 +21,18 @@ using namespace Eigen;
 using namespace std;
 
 
-MatrixXd functionForRotationAndTransition(const MatrixXd& parameters,const MatrixXd& variables);
+MatrixXd functionForRotationAndTransition(const MatrixXd& ,const MatrixXd&, const MatrixXd&);
 
-MatrixXd jacobianForPoint(const MatrixXd& parameters,const MatrixXd& variables);
+MatrixXd jacobianForPoint(const MatrixXd& ,const MatrixXd&, const MatrixXd&);
 
-MatrixXd jacobianForRotationAndTransition(const MatrixXd& parameters,const MatrixXd& variables);
+MatrixXd jacobianForRotationAndTransition(const MatrixXd& ,const MatrixXd& , const MatrixXd&);
 
 
-MatrixXd functionForRotationAndTransitionUnitLength(const MatrixXd& parameters,const MatrixXd& variables);
+MatrixXd functionForRotationAndTransitionUnitLength(const MatrixXd& ,const MatrixXd& , const MatrixXd&);
 
-MatrixXd jacobianForPointUnitLength(const MatrixXd& parameters,const MatrixXd& variables);
+MatrixXd jacobianForPointUnitLength(const MatrixXd& ,const MatrixXd& , const MatrixXd&);
 
-MatrixXd jacobianForRotationAndTransitionUnitLength(const MatrixXd& parameters,const MatrixXd& variables);
+MatrixXd jacobianForRotationAndTransitionUnitLength(const MatrixXd& ,const MatrixXd&,  const MatrixXd&);
 
 
 

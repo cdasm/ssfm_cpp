@@ -274,14 +274,7 @@ MatrixXd jacobianForRotationAndTransitionUnitLength__(const MatrixXd& parameters
 	return A0;
 }
 
-MatrixXd functionForRotationAndTransitionUnitLength_(const MatrixXd& parameters,const MatrixXd& variables2)
-{
-	MatrixXd variable(1,6);
-	variable.block(0,0,1,3)=variables2.block(0,0,1,3);
-	variable.block(0,3,1,3)=transitionFrom2Para(variables2.block(0,3,1,2));
 
-	return functionForRotationAndTransition(parameters,variable);
-}
 
 MatrixXd functionForRotationAndTransition__(const MatrixXd& parameters,const MatrixXd& variables)
 {
@@ -352,15 +345,6 @@ MatrixXd functionForRotationAndTransition__(const MatrixXd& parameters,const Mat
 }
 
 
-
-MatrixXd functionForRotationAndTransitionUnitLength__(const MatrixXd& parameters,const MatrixXd& variables2)
-{
-	MatrixXd variable(1,6);
-	variable.block(0,0,1,3)=variables2.block(0,0,1,3);
-	variable.block(0,3,1,3)=transitionFrom2Para(variables2.block(0,3,1,2));
-
-	return functionForRotationAndTransition(parameters,variable);
-}
 
 
 
@@ -1179,3 +1163,447 @@ MatrixXd pointProjectErrorJac0bian__(const MatrixXd& pU,const MatrixXd& pnt)
 	A0(2,2) = t4;
 	return A0;
 }
+
+
+
+/*
+
+auto threeDimensionReconstruction(const string& featureFileName,const string& matchFileName)->tuple<MatrixXd,MatrixXd,MatrixXd>
+{
+	
+	vector<vector<vector<int> > > features;
+	vector<map<int,int>> correspondences;
+	vector<unordered_set<int> > contain;
+	vector<vector<int> > featureIsPoint;
+
+    vector< unordered_map<int,int> > trajectories=collectFromPairwiseMatching(featureFileName,matchFileName,features,correspondences,contain,featureIsPoint);
+
+	vector<unordered_map<int,bool> > projectionsValid(trajectories.size());
+
+	for ( int i=0;i<trajectories.size();++i)
+	{
+		for(auto&w:trajectories[i])
+			projectionsValid[i][w.first]=false;
+
+	}
+
+	MatrixXd transitions(features.size(),3);
+
+	MatrixXd rotations(features.size(),3);
+
+	vector<bool> alreadyEstimated(features.size(),false);
+
+	transitions.row(0)=MatrixXd::Zero(1,3);
+	rotations.row(0)=MatrixXd::Zero(1,3);
+	alreadyEstimated[0]=true;
+
+	MatrixXd reconstructedPoints(trajectories.size(),3);
+
+	vector<bool> alreadyReconstructed(trajectories.size(),false);
+
+	vector<int> imageSize(2);
+	imageSize[0]=512;imageSize[1]=256;
+
+	auto convertFeature=[&](const vector<vector<int>> &fea)->MatrixXd
+	{
+		MatrixXd sfea(fea.size(),3);
+		for (int i = 0; i < fea.size(); i++)
+		{
+			sfea.row(i)=imageCordinate2Phere(fea[i],imageSize);
+		}
+		return sfea;
+	};
+	vector<MatrixXd> sphericalFeatures(features.size());
+	
+	for (int i = 0; i < sphericalFeatures.size(); i++)
+	{
+		sphericalFeatures[i]=convertFeature(features[i]);
+	}
+
+//	vector<vector<int> > points1(correspondences[0].size()),points2(correspondences[0].size());
+
+	vector<int> index(correspondences[0].size());
+
+	vector<int> ind1,ind2;
+
+	int count=0;
+	for ( auto&k:correspondences[0])
+	{
+		ind1.push_back(k.first);
+		ind2.push_back(k.second);
+		index[count]=featureIsPoint[0][k.first];
+		++count;
+	}
+
+	MatrixXd curTransition,curRotation;
+	auto pointsError2Frame=geometricReconstructionFrom2Frames(sphericalFeatures[0],ind1,sphericalFeatures[1],ind2,curTransition,curRotation);
+	transitions.row(1)=curTransition;
+	rotations.row(1)=curRotation;
+	alreadyEstimated[1]=true;
+
+
+	auto setReconstructedPoints=[&reconstructedPoints,&alreadyReconstructed](const pair<MatrixXd,vector<double> >& mpointsError2Frame,const vector<int>& mindex)
+	{
+		assert(mpointsError2Frame.second.size()==mindex.size());
+
+
+		for (int i = 0; i < mpointsError2Frame.second.size(); i++)
+		{
+			if (mpointsError2Frame.second[i]>0 && mpointsError2Frame.second[i]<constrain_on_point_error &&length(mpointsError2Frame.first.row(i))<constrain_on_point_length )
+			{
+				reconstructedPoints.row(mindex[i])=mpointsError2Frame.first.row(i);
+				alreadyReconstructed[mindex[i]]=true;
+
+			}
+			else
+			{
+				alreadyReconstructed[mindex[i]]=false;
+			}
+
+		}
+	};
+
+	setReconstructedPoints(pointsError2Frame,index);
+
+	auto reconstructPoints=[&](int lcameraIndex)
+	{
+		assert(lcameraIndex>=1);
+		assert(alreadyEstimated[lcameraIndex-1] && alreadyEstimated[lcameraIndex]);
+		int lCount=0;
+		vector<int> lIndex,lIndex1,lIndex2;
+		for (auto& s:correspondences[lcameraIndex-1])
+		{
+			if(!alreadyReconstructed[featureIsPoint[lcameraIndex-1][s.first]])
+			{
+				lIndex.push_back(featureIsPoint[lcameraIndex-1][s.first]);
+				lIndex1.push_back(s.first);
+				lIndex2.push_back(s.second);
+			}
+			++lCount;
+		}
+		vector<MatrixXd> ltransitions(2);
+		vector<MatrixXd> lrotations(2);
+		ltransitions[0]=transitions.row(lcameraIndex-1);
+		ltransitions[1]=transitions.row(lcameraIndex);
+
+		lrotations[0]=rotationThomason(rotations.row(lcameraIndex-1)).inverse();
+		lrotations[1]=rotationThomason(rotations.row(lcameraIndex)).inverse();
+		auto lpointsError2Frame=bestPoints(sphericalFeatures[lcameraIndex-1],lIndex1,sphericalFeatures[lcameraIndex],lIndex2,ltransitions,lrotations);
+		setReconstructedPoints(lpointsError2Frame,lIndex);
+
+	};
+	vector<funcType2> functions(2);
+	functions[0]=&functionForRotationAndTransition;
+	functions[1]=&functionForRotationAndTransitionUnitLength;
+	vector<funcType2> jacabianFunctions(4);
+	jacabianFunctions[0]=&jacobianForRotationAndTransition;
+	jacabianFunctions[1]=&jacobianForRotationAndTransitionUnitLength;
+	jacabianFunctions[2]=&jacobianForPoint;
+	jacabianFunctions[3]=&jacobianForPointUnitLength;
+
+	auto bundleAdjustment=[&](unordered_map<int,cameraType>& lbundlePara)
+	{
+		unordered_set<int> pntIndx;
+
+		unordered_map<int,pair<int,int>> cameraParaLookUp;
+		unordered_map<int,pair<int,int>> pointParaLookUp;
+		unordered_map<int,int> staticCameraParaLookUp;
+
+		vector<vector<int> > funcDataMap;
+		vector<vector<int> > jfuncDataMap;
+		int totalProjCount=0;
+		int totalParameterCount=0;
+		vector<pair<int,int> > allProjs;
+
+		for (auto& s:lbundlePara)
+		{
+			assert(alreadyEstimated[s.first]);
+			if (s.second!=cameraType::_static)
+			{
+				for (auto&w: contain[s.first])
+				{
+					if(alreadyReconstructed[w] && !pntIndx.count(w))
+					{
+						int prjCount=0;
+
+						unordered_set<int> curPrj;
+						for (auto &mi: trajectories[w])
+						{
+							if(lbundlePara.count(mi.first))
+							{
+								++prjCount;
+								curPrj.insert(mi.first);
+							}
+						}
+
+						if(prjCount>1)
+						{
+							if(!pointParaLookUp.count(w))
+							{
+								pointParaLookUp[w]=make_pair(totalParameterCount,3);
+								totalParameterCount+=3;
+							}
+							for (auto& x:curPrj)
+							{
+							//	int curPrjCamera=trajectories[w].first[x];
+								int curPrjCamera=x;
+								
+
+
+
+								switch (lbundlePara[curPrjCamera])
+								{
+								case cameraType::_static:
+									{
+										if(!staticCameraParaLookUp.count(curPrjCamera))
+										{
+											int _t=staticCameraParaLookUp.size();
+											staticCameraParaLookUp[curPrjCamera]=_t;
+										}
+										
+										vector<int> static_funcMap(7);
+										vector<int> static_jfuncMap(8);
+										static_funcMap[0]=0;
+										static_funcMap[1]=totalProjCount*3;
+										static_funcMap[2]=totalProjCount;
+										static_funcMap[3]=1;
+										static_funcMap[4]=staticCameraParaLookUp[curPrjCamera];
+										static_funcMap[5]=pointParaLookUp[w].first;
+										static_funcMap[6]=pointParaLookUp[w].second;
+										funcDataMap.push_back(static_funcMap);
+										
+										static_jfuncMap[0]=2;
+										static_jfuncMap[1]=totalProjCount*3;
+										static_jfuncMap[2]=pointParaLookUp[w].first;
+										static_jfuncMap[3]=totalProjCount;
+										static_jfuncMap[4]=1;
+										static_jfuncMap[5]=staticCameraParaLookUp[curPrjCamera];
+										static_jfuncMap[6]=pointParaLookUp[w].first;
+										static_jfuncMap[7]=pointParaLookUp[w].second;
+										jfuncDataMap.push_back(static_jfuncMap);
+									}
+									break;
+								case cameraType::_unitLength:
+									{
+										if(!cameraParaLookUp.count(curPrjCamera))
+										{
+											cameraParaLookUp[curPrjCamera]=make_pair(totalParameterCount,5);
+											totalParameterCount+=5;
+										}
+										vector<int> funcMap(9);	
+										vector<int> jfuncMap(10);
+										funcMap[0]=1;
+										funcMap[1]=totalProjCount*3;
+										funcMap[2]=totalProjCount;
+										funcMap[3]=-1;
+										funcMap[4]=-1;
+										funcMap[5]=cameraParaLookUp[curPrjCamera].first;
+										funcMap[6]=cameraParaLookUp[curPrjCamera].second;
+										funcMap[7]=pointParaLookUp[w].first;
+										funcMap[8]=pointParaLookUp[w].second;
+										funcDataMap.push_back(funcMap);
+										
+										jfuncMap[0]=1;
+										jfuncMap[1]=totalProjCount*3;
+										jfuncMap[2]=cameraParaLookUp[curPrjCamera].first;
+										jfuncMap[3]=totalProjCount;
+										jfuncMap[4]=-1;
+										jfuncMap[5]=-1;
+										jfuncMap[6]=cameraParaLookUp[curPrjCamera].first;
+										jfuncMap[7]=cameraParaLookUp[curPrjCamera].second;
+										jfuncMap[8]=pointParaLookUp[w].first;
+										jfuncMap[9]=pointParaLookUp[w].second;
+										jfuncDataMap.push_back(jfuncMap);
+
+										jfuncMap[0]=3;
+									
+										jfuncMap[2]=pointParaLookUp[w].first;
+									
+										jfuncDataMap.push_back(jfuncMap);
+
+									}
+									break;
+								case cameraType::_ordinary:
+									{
+										if(!cameraParaLookUp.count(curPrjCamera))
+										{
+											cameraParaLookUp[curPrjCamera]=make_pair(totalParameterCount,6);
+											totalParameterCount+=6;
+										}
+										vector<int> funcMap(9);	
+										vector<int> jfuncMap(10);
+										funcMap[0]=0;
+										funcMap[1]=totalProjCount*3;
+										funcMap[2]=totalProjCount;
+										funcMap[3]=-1;
+										funcMap[4]=-1;
+										funcMap[5]=cameraParaLookUp[curPrjCamera].first;
+										funcMap[6]=cameraParaLookUp[curPrjCamera].second;
+										funcMap[7]=pointParaLookUp[w].first;
+										funcMap[8]=pointParaLookUp[w].second;
+										funcDataMap.push_back(funcMap);
+										
+										jfuncMap[0]=0;
+										jfuncMap[1]=totalProjCount*3;
+										jfuncMap[2]=cameraParaLookUp[curPrjCamera].first;
+										jfuncMap[3]=totalProjCount;
+										jfuncMap[4]=-1;
+										jfuncMap[5]=-1;
+										jfuncMap[6]=cameraParaLookUp[curPrjCamera].first;
+										jfuncMap[7]=cameraParaLookUp[curPrjCamera].second;
+										jfuncMap[8]=pointParaLookUp[w].first;
+										jfuncMap[9]=pointParaLookUp[w].second;
+										jfuncDataMap.push_back(jfuncMap);
+
+										jfuncMap[0]=2;
+									
+										jfuncMap[2]=pointParaLookUp[w].first;
+									
+										jfuncDataMap.push_back(jfuncMap);
+									}
+									break;
+								default:
+									break;
+								}
+								++totalProjCount;
+								allProjs.push_back(make_pair( x,trajectories[w][x]));
+							}
+							pntIndx.insert(w);
+						}
+					}
+				}
+			}
+		}
+
+
+		MatrixXd assistantPara(staticCameraParaLookUp.size(),6);
+
+		MatrixXd dataSet(totalProjCount,3);
+
+		MatrixXd obj_vals=MatrixXd::Zero(1,totalProjCount*3);
+		MatrixXd intit_parameters(1,totalParameterCount);
+
+		for ( auto& sc: staticCameraParaLookUp)
+		{
+			assistantPara.block(sc.second,0,1,3)=rotations.row(sc.first);
+			assistantPara.block(sc.second,3,1,3)=transitions.row(sc.first);
+		}
+		for (int i=0;i<allProjs.size();++i)
+		{
+			dataSet.row(i)=sphericalFeatures[allProjs[i].first].row(allProjs[i].second);
+		}
+		for (auto& cc:cameraParaLookUp)
+		{
+			
+			MatrixXd paraM;
+			if(lbundlePara[cc.first]==cameraType::_unitLength)
+			{
+				paraM.resize(1,5);
+				paraM.block(0,3,1,2)=transition2Para(transitions.row(cc.first));
+			}
+
+			if(lbundlePara[cc.first]==cameraType::_ordinary)
+			{
+				paraM.resize(1,6);
+				paraM.block(0,3,1,3)=transitions.row(cc.first);
+			}
+			paraM.block(0,0,1,3)=rotations.row(cc.first);
+			intit_parameters.block(0,cc.second.first,1,cc.second.second)=paraM;
+		}
+
+		for(auto& p:pointParaLookUp)
+		{
+
+			intit_parameters.block(0,p.second.first,1,p.second.second)=reconstructedPoints.row(p.first);
+		}
+		auto est_parameters=levenbergM_advanced(dataSet,assistantPara,funcDataMap,jfuncDataMap,obj_vals,functions,jacabianFunctions,intit_parameters);
+
+
+		for (auto& cc:cameraParaLookUp)
+		{
+			
+			MatrixXd paraM=est_parameters.block(0,cc.second.first,1,cc.second.second);
+			if(lbundlePara[cc.first]==cameraType::_unitLength)
+			{
+				
+				transitions.row(cc.first)=transitionFrom2Para(paraM.block(0,3,1,2));
+			}
+
+			if(lbundlePara[cc.first]==cameraType::_ordinary)
+			{
+				
+				transitions.row(cc.first)=paraM.block(0,3,1,3);
+			}
+			rotations.row(cc.first)=paraM.block(0,0,1,3);
+			//=paraM;
+		}
+
+		for(auto& p:pointParaLookUp)
+		{
+
+			reconstructedPoints.row(p.first)=est_parameters.block(0,p.second.first,1,p.second.second);
+		}
+
+
+	};
+
+	unordered_map<int,cameraType> bundlePara1;
+
+	bundlePara1[0]=cameraType::_static;
+	bundlePara1[1]=cameraType::_unitLength;
+
+	cout<<"bundle adjustment for cameras and points before camera number "<<"1"<<endl;
+	
+	bundleAdjustment(bundlePara1);
+	reconstructPoints(1);
+
+	for (int cameraIndex = 2; cameraIndex < features.size(); cameraIndex++)
+	{
+		vector<int> curInd1,curInd2;
+		for (int i = 0; i < featureIsPoint[cameraIndex].size(); i++)
+		{
+			if (featureIsPoint[cameraIndex][i]>=0 && alreadyReconstructed[featureIsPoint[cameraIndex][i]])
+			{
+				curInd1.push_back(i);
+				curInd2.push_back(featureIsPoint[cameraIndex][i]);
+			}
+		}
+		cout<<curInd1.size()<<" projections matching "<<curInd2.size()<<" points for camera position estimation"<<"\n\n"<<endl;
+
+		if(cameraIndex==12)
+		{
+			cout<<"break point";
+		}
+		auto cameraPara=estimateCameraParameter(sphericalFeatures[cameraIndex],curInd1,reconstructedPoints,curInd2);
+
+		cout<<"estimated camera parameters of camera number "<<cameraIndex<<": "<<cameraPara<<endl;
+		//getchar();
+		rotations.row(cameraIndex)=cameraPara.block(0,0,1,3);
+		transitions.row(cameraIndex)=cameraPara.block(0,3,1,3);
+		alreadyEstimated[cameraIndex]=true;
+		reconstructPoints(cameraIndex);
+
+
+
+
+		unordered_map<int,cameraType> bundlePara;
+
+		bundlePara[0]=cameraType::_static;
+		bundlePara[1]=cameraType::_unitLength;
+		for (int i = 2; i <=cameraIndex; i++)
+		{
+			bundlePara[i]=cameraType::_ordinary;
+		}
+		cout<<"bundle adjustment for cameras and points before camera number "<<cameraIndex<<endl;
+		bundleAdjustment(bundlePara);
+		reconstructPoints(cameraIndex);
+	}
+
+
+	return make_tuple(transitions,rotations,reconstructedPoints);
+	
+}
+
+
+
+*/

@@ -3,9 +3,9 @@
 
 #include <iostream>
 
-MatrixXd levenbergM_simple(MatrixXd& dataset,const MatrixXd& obj_vals,funcType func,funcType jfunc,MatrixXd& initParameters,int maxiter_times)
+MatrixXd levenbergM_adhoc(const vector<MatrixXd>& dataset,const MatrixXd& obj_vals,funcTypeadhoc func,funcTypeadhoc jfunc,MatrixXd& initParameters,int maxiter_times)
 {
-	int dataNumber=dataset.rows();
+	int dataNumber=dataset[0].rows();
 	int parameterNumber=initParameters.cols();
 	int observationNumber=obj_vals.cols()/dataNumber;
 
@@ -31,12 +31,12 @@ MatrixXd levenbergM_simple(MatrixXd& dataset,const MatrixXd& obj_vals,funcType f
 			J=MatrixXd::Zero(dataNumber*observationNumber,parameterNumber);
 			for (int i = 0; i < dataNumber; i++)
 			{
-				J.block(i*observationNumber,0,observationNumber,parameterNumber)=jfunc(dataset.row(i),para_est);
+				J.block(i*observationNumber,0,observationNumber,parameterNumber)=jfunc(dataset[0].row(i),dataset[1].row(i),para_est);
 			}
 
 			for (int i = 0; i < dataNumber; i++)
 			{
-				dis_init.block(0,i*observationNumber,1,observationNumber)=func(dataset.row(i),para_est);
+				dis_init.block(0,i*observationNumber,1,observationNumber)=func(dataset[0].row(i),dataset[1].row(i),para_est);
 			}
 			d=obj_vals-dis_init;
 			H=J.transpose()*J;
@@ -48,7 +48,7 @@ MatrixXd levenbergM_simple(MatrixXd& dataset,const MatrixXd& obj_vals,funcType f
 		para_lm=para_est+dp;
 		for (int i = 0; i < dataNumber; i++)
 		{
-			dis_init.block(0,i*observationNumber,1,observationNumber)=func(dataset.row(i),para_lm);
+			dis_init.block(0,i*observationNumber,1,observationNumber)=func(dataset[0].row(i),dataset[1].row(i),para_lm);
 		}
 		d=obj_vals-dis_init;
 		double e_lm=(d*d.transpose())(0,0);
@@ -93,7 +93,7 @@ vector<Triplet<double> > tosetSparseMatrix(const MatrixXd& dm,int startrow,int s
 //	sm.setFromTriplets(toset.begin(),toset.end());
 }
 
-
+/*
 MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vector<vector<int> >& funcDataMap,const vector<vector<int> >& jfuncDataMap,const MatrixXd& obj_vals,vector<funcType2>& funcs,vector<funcType2>& jfuncs,MatrixXd& initParameters,int maxiter_times)
 {
 	int dataNumber=dataset.rows();
@@ -228,7 +228,7 @@ MatrixXd levenbergM_advanced(MatrixXd& dataset,MatrixXd& assistantPara,const vec
 
 
 	return para_est;
-}
+}*/
 
 
 

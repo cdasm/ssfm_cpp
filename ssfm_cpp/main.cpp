@@ -118,9 +118,9 @@ void testTwoFrame()
 	}
 
 
-	geometricReconstructionFrom2Frames(sp1,ind,sp2,ind,tt,rr);
+//	geometricReconstructionFrom2Frames(sp1,ind,sp2,ind,tt,rr);
 }
-
+/*
 void testJacobian()
 {
 	MatrixXd para1(1,6);
@@ -133,7 +133,7 @@ void testJacobian()
 	cout<<jacobianForRotationAndTransitionUnitLength(para1,var1)<<endl;
 	cout<<jacobianForPoint(para1,var1)<<endl;
 	cout<<jacobianForPointUnitLength(para1,var1)<<endl;
-}
+}*/
 
 
 void testLM()
@@ -216,7 +216,7 @@ void testInter()
 
 {
 	testLM();
-	testJacobian();
+//	testJacobian();
 	 Eigen::MatrixXf m(4,4);
 	  m <<  1, 2, 3, 4,
 			5, 6, 7, 8,
@@ -309,17 +309,15 @@ int main()
 	
 	//auto pointOnFirst2Frames=set_intersect(contain[0],contain[1]);
 
-	auto pointsCameras=threeDimensionReconstruction("orb.lst","match.lst");
+	auto pointsCameras=threeDimensionReconstruction("orb.lst","match.lst",512,256);
 	ofstream f1;
 	f1.open("points.txt");
-	f1<<get<2>(pointsCameras);
+	f1<<(pointsCameras.second);
 	f1.close();
-	f1.open("transitions.txt");
-	f1<<get<0>(pointsCameras);
+	f1.open("cameras.txt");
+	f1<<(pointsCameras.first);
 	f1.close();
-	f1.open("rotations.txt");
-	f1<<get<1>(pointsCameras);
-	f1.close();
+
 
 	
 

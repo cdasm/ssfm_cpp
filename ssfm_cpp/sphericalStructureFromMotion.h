@@ -11,6 +11,7 @@
 #include "levenbergMarquardt.h"
 
 #include "bundleFunctionAndJacobian.h"
+#include "bundleFuncJacoSettings.inl"
 
 #include <iostream>
 #include <unordered_map>
@@ -21,6 +22,8 @@
 using namespace Eigen;
 
 using namespace sSfm;
+using namespace bundleFunctionAndJacobian;
+
 using namespace std;
 
 
@@ -54,21 +57,21 @@ enum cameraType{_static,_unitLength,_ordinary};
 
 
 
-vector<pair<MatrixXd,MatrixXd> > transitionAndRotationFromEssential(const MatrixXd& essential);
+vector<MatrixXd > transitionAndRotationFromEssential(const MatrixXd& essential);
 
 
-pair<MatrixXd,vector<double> > bestPoints(const MatrixXd& spnts1,const vector<int>& ind1,const MatrixXd& spnts2,const vector<int>& ind2,const vector<MatrixXd>& transitions,const vector<MatrixXd>& rotations);
+pair<MatrixXd,vector<double> > bestPoints(const MatrixXd& spnts1,const vector<int>& ind1,const MatrixXd& spnts2,const vector<int>& ind2,const vector<MatrixXd>& cameraPoses);
 
 
 
 
 //auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const vector<int>& ind1,const MatrixXd& sphericalPoints2,const vector<int>& ind2,vector<double>& transition,vector<double >& rotation)->pair<MatrixXd,vector<double> >;
-auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const vector<int>& ind1,const MatrixXd& sphericalPoints2,const vector<int>& ind2,MatrixXd& transition,MatrixXd& rotation)->pair<MatrixXd,vector<double> >;
+auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const vector<int>& ind1,const MatrixXd& sphericalPoints2,const vector<int>& ind2,MatrixXd& cameraPosition)->pair<MatrixXd,vector<double> >;
 
 
-auto threeDimensionReconstruction(const string& featureFileName,const string& matchFileName)->tuple<MatrixXd,MatrixXd,MatrixXd>;
+auto threeDimensionReconstruction(const string& featureFileName,const string& matchFileName,int imageWidth,int imageHeight)->pair<MatrixXd,MatrixXd>;
 
-
+bool bestPoint(const MatrixXd& projections,const MatrixXd& cameras,vector<bool>& flags,MatrixXd& pnt);
 
 MatrixXd bestPoint(const MatrixXd& p, const MatrixXd& u);
 
