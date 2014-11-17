@@ -555,7 +555,7 @@ pair<MatrixXd,vector<double> > bestPoints(const MatrixXd& spnts1,const vector<in
 			error[i]=0;
 			for(int pui=0;pui<2;++pui)
 			{
-				MatrixXd terror=functionForRotationAndTransition(projs.row(i),points.row(i),cameraPositions.row(i));
+				MatrixXd terror=functionForRotationAndTransition(projs.row(i),points.row(i),cameraPositions.row(pui));
 				error[i]+= (terror*terror.transpose())(0,0);
 			}
 			error[i]/=2.0;
