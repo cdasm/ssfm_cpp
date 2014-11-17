@@ -544,6 +544,7 @@ pair<MatrixXd,vector<double> > bestPoints(const MatrixXd& spnts1,const vector<in
 	for (int i = 0; i < ind1.size(); i++)
 	{
 		
+		cout<<i<<"\t";
 		MatrixXd projs(2,3);
 		projs.row(0)=spnts1.row(ind1[i]);
 		projs.row(1)=spnts2.row(ind2[i]);
