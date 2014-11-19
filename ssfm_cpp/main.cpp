@@ -295,27 +295,20 @@ void testBestPoint()
 
 int main()
 {
-//	testBestPoint();
-	cout<<1e10/1e8<<endl;
-//	testInverseWithSolve();
 
 	
-	//testLM();
+	_chdir("D:\\demos\\imageSequence");
 
-//	testInter();
-	
-	_chdir("D:\\agood");
-//set_intersection(contain[0].begin(),contain[0].end(),contain[1].begin(),contain[1].end(),back_inserter(pointOnFirst2Frames));
-	
-	//auto pointOnFirst2Frames=set_intersect(contain[0],contain[1]);
-
-	auto pointsCameras=threeDimensionReconstruction("torb.lst","tmatch.lst",512,256);
+	auto pointsCameras=threeDimensionReconstruction("orb.lst","match.lst",5400,2700);
 	ofstream f1;
 	f1.open("points.txt");
 	f1<<(pointsCameras.second);
 	f1.close();
+	//p1 p2 p3
 	f1.open("cameras.txt");
 	f1<<(pointsCameras.first);
+
+	//r1 r2 r3 t1 t2 t3
 	f1.close();
 
 
