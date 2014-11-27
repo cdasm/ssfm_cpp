@@ -71,26 +71,26 @@ auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const v
 
 auto threeDimensionReconstruction(const string& featureFileName,const string& matchFileName,int imageWidth,int imageHeight)->pair<MatrixXd,MatrixXd>;
 
-bool bestPoint(const MatrixXd& projections,const MatrixXd& cameras,vector<bool>& flags,MatrixXd& pnt);
+bool reconstructPoint(const MatrixXd& projections,const MatrixXd& cameras,vector<bool>& flags,MatrixXd& pnt);
 
-MatrixXd bestPoint(const MatrixXd& p, const MatrixXd& u);
+MatrixXd reconstructPoint(const MatrixXd& p, const MatrixXd& u);
 
 MatrixXd transitionFrom2Para(const MatrixXd& inp);
 
 
 
-MatrixXd functionForRotationAndTransition(const vector<MatrixXd>& input);
+MatrixXd projectionError(const vector<MatrixXd>& input);
 
-MatrixXd jacobianForRotationAndTransition(const vector<MatrixXd>& input);
+MatrixXd jacobianForCamera(const vector<MatrixXd>& input);
 
 MatrixXd jacobianForPoint(const vector<MatrixXd>& input);
 
 
 
 
-MatrixXd functionForRotationAndTransitionUnitLength(const vector<MatrixXd>& input);
+MatrixXd projectionErrorUnitLength(const vector<MatrixXd>& input);
 
-MatrixXd jacobianForRotationAndTransitionUnitLength(const vector<MatrixXd>& input);
+MatrixXd jacobianForCameraUnitLength(const vector<MatrixXd>& input);
 
 MatrixXd jacobianForPointUnitLength(const vector<MatrixXd>& input);
 

@@ -244,7 +244,7 @@ void testInter()
 	p<<0,0,0,1,1,1;
 	u<<2,4,5,3,2,1;
 
-	auto pnt=bestPoint(p,u);
+	auto pnt=reconstructPoint(p,u);
 
 	cout<<pnt<<endl;
 
@@ -290,7 +290,7 @@ void testBestPoint()
 
 	b<<  0.5960 ,   0.5603  ,  0.5752,
     0.6211  ,  0.5869 ,   0.5194;
-	bestPoint(a,b);
+	reconstructPoint(a,b);
 }
 
 int main()

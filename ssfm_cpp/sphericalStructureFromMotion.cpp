@@ -334,7 +334,7 @@ MatrixXd bestPointCoefficient(double a,double b,double c,double d,double e,doubl
 
 MatrixXd functionForPointEstimate(const MatrixXd& var1,const MatrixXd& var2,const MatrixXd& var3)
 {
-	return  functionForRotationAndTransition (var1,var3,var2);
+	return  projectionError (var1,var3,var2);
 }
 
 
@@ -343,7 +343,7 @@ MatrixXd jacobianForPointEstimate(const MatrixXd& var1,const MatrixXd& var2,cons
 	return jacobianForPoint (var1,var3,var2);
 }
 
-MatrixXd bestPoint(const MatrixXd& projections,const MatrixXd& cameras)
+MatrixXd reconstructPoint(const MatrixXd& projections,const MatrixXd& cameras)
 {	
 	MatrixXd obj_vals=MatrixXd::Zero(1,projections.rows()*observationDim);
 	MatrixXd initPara=MatrixXd::Random(1,pointDim);
@@ -358,9 +358,9 @@ double length(const MatrixXd& a)
 	return sqrt((a*a.transpose())(0,0));
 }
 
-double projectionError(const MatrixXd& projection,const MatrixXd& point,const MatrixXd& camera)
+double projectionErrorValue(const MatrixXd& projection,const MatrixXd& point,const MatrixXd& camera)
 {
-	auto terror=functionForRotationAndTransition(projection,point,camera);
+	auto terror=projectionError(projection,point,camera);
 
 	return sqrt((terror*terror.transpose())(0,0));
 }
@@ -407,7 +407,7 @@ bool bestPoint(const MatrixXd& projections,const MatrixXd& cameras,vector<bool>&
 
 	do
 	{
-		pnt=bestPoint(tprojections,tcameras);
+		pnt=reconstructPoint(tprojections,tcameras);
 
 		usedcamera=tprojections.rows();
 		goodcamera=0;	
@@ -415,7 +415,7 @@ bool bestPoint(const MatrixXd& projections,const MatrixXd& cameras,vector<bool>&
 		vector<int> tmatch;
 		for (int i = 0; i < tprojections.rows(); i++)
 		{
-			if(pointBeforeCamera(pnt,tprojections.row(i),tcameras.row(i)) && projectionError(pnt,tprojections.row(i),tcameras.row(i))<constrain_on_point_error )
+			if(pointBeforeCamera(pnt,tprojections.row(i),tcameras.row(i)) && projectionErrorValue(pnt,tprojections.row(i),tcameras.row(i))<constrain_on_point_error )
 			{
 				tmatch.push_back(match[i]);
 				++goodcamera;
@@ -548,14 +548,14 @@ pair<MatrixXd,vector<double> > bestPoints(const MatrixXd& spnts1,const vector<in
 		MatrixXd projs(2,3);
 		projs.row(0)=spnts1.row(ind1[i]);
 		projs.row(1)=spnts2.row(ind2[i]);
-		points.row(i)=bestPoint(projs,cameraPositions);
+		points.row(i)=reconstructPoint(projs,cameraPositions);
 		if(pointBeforeCamera(points.row(i),projs.row(0),cameraPositions.row(0) ) && pointBeforeCamera(points.row(i),projs.row(1),cameraPositions.row(1) ))
 		{
 			
 			error[i]=0;
 			for(int pui=0;pui<2;++pui)
 			{
-				MatrixXd terror=functionForRotationAndTransition(projs.row(pui),points.row(i),cameraPositions.row(pui));
+				MatrixXd terror=projectionError(projs.row(pui),points.row(i),cameraPositions.row(pui));
 				error[i]+= (terror*terror.transpose())(0,0);
 			}
 			error[i]/=2.0;
@@ -838,11 +838,11 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 	};
 
 	vector<funcType2> functions(2);
-	functions[0]=&functionForRotationAndTransition;
-	functions[1]=&functionForRotationAndTransitionUnitLength;
+	functions[0]=&projectionError;
+	functions[1]=&projectionErrorUnitLength;
 	vector<funcType2> jacabianFunctions(4);
-	jacabianFunctions[0]=&jacobianForRotationAndTransition;
-	jacabianFunctions[1]=&jacobianForRotationAndTransitionUnitLength;
+	jacabianFunctions[0]=&jacobianForCamera;
+	jacabianFunctions[1]=&jacobianForCameraUnitLength;
 	jacabianFunctions[2]=&jacobianForPoint;
 	jacabianFunctions[3]=&jacobianForPointUnitLength;
 
@@ -1126,24 +1126,24 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 
 
 
-MatrixXd functionForRotationAndTransition(const vector<MatrixXd>& input)
+MatrixXd projectionError(const vector<MatrixXd>& input)
 {
 //	MatrixXd parameters(1,6);
 //	parameters.block(0,0,1,3)=input[0];
 //	parameters.block(0,3,1,3)=input[2];
 //	MatrixXd variables=input[1];
 	assert(input.size()==3);
-	return functionForRotationAndTransition(input[0],input[1],input[2]);
+	return projectionError(input[0],input[1],input[2]);
 }
 
-MatrixXd jacobianForRotationAndTransition(const vector<MatrixXd>& input)
+MatrixXd jacobianForCamera(const vector<MatrixXd>& input)
 {
 //	MatrixXd parameters(1,6);
 //	parameters.block(0,0,1,3)=input[0];
 //	parameters.block(0,3,1,3)=input[2];
 //	MatrixXd variables=input[1];
 	assert(input.size()==3);
-	return jacobianForRotationAndTransition(input[0],input[1],input[2]);
+	return jacobianForCamera(input[0],input[1],input[2]);
 
 }
 
@@ -1160,24 +1160,24 @@ MatrixXd jacobianForPoint(const vector<MatrixXd>& input)
 
 
 
-MatrixXd functionForRotationAndTransitionUnitLength(const vector<MatrixXd>& input)
+MatrixXd projectionErrorUnitLength(const vector<MatrixXd>& input)
 {
 //	MatrixXd parameters(1,6);
 //	parameters.block(0,0,1,3)=input[0];
 //	parameters.block(0,3,1,3)=input[2];
 //	MatrixXd variables=input[1];
 	assert(input.size()==3);
-	return functionForRotationAndTransitionUnitLength(input[0],input[1],input[2]);
+	return projectionErrorUnitLength(input[0],input[1],input[2]);
 }
 
-MatrixXd jacobianForRotationAndTransitionUnitLength(const vector<MatrixXd>& input)
+MatrixXd jacobianForCameraUnitLength(const vector<MatrixXd>& input)
 {
 //	MatrixXd parameters(1,6);
 //	parameters.block(0,0,1,3)=input[0];
 //	parameters.block(0,3,1,3)=input[2];
 //	MatrixXd variables=input[1];
 	assert(input.size()==3);
-	return jacobianForRotationAndTransitionUnitLength(input[0],input[1],input[2]);
+	return jacobianForCameraUnitLength(input[0],input[1],input[2]);
 
 }
 
@@ -1225,5 +1225,5 @@ MatrixXd estimateCameraParameter(const MatrixXd& projPoints,const vector<int>& i
 	MatrixXd obj_vals=MatrixXd::Zero(1,ind1.size()*3);
 	MatrixXd para=MatrixXd::Zero(1,6);
 
-	return	levenbergM_adhoc(ddata,obj_vals,functionForRotationAndTransition,jacobianForRotationAndTransition,para);
+	return	levenbergM_adhoc(ddata,obj_vals,projectionError,jacobianForCamera,para);
 }
