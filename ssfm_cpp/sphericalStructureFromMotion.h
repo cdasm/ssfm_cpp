@@ -73,7 +73,8 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 
 bool reconstructPoint(const MatrixXd& projections,const MatrixXd& cameras,vector<bool>& flags,MatrixXd& pnt);
 
-MatrixXd reconstructPoint(const MatrixXd& p, const MatrixXd& u);
+//MatrixXd reconstructPoint(const MatrixXd& p, const MatrixXd& u);
+MatrixXd reconstructPointLinear(const MatrixXd& projections, const MatrixXd& cameras);
 
 MatrixXd transitionFrom2Para(const MatrixXd& inp);
 

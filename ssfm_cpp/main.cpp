@@ -244,7 +244,7 @@ void testInter()
 	p<<0,0,0,1,1,1;
 	u<<2,4,5,3,2,1;
 
-	auto pnt=reconstructPoint(p,u);
+	auto pnt= reconstructPoint (p,u);
 
 	cout<<pnt<<endl;
 
@@ -297,9 +297,9 @@ int main()
 {
 
 	
-	_chdir("D:\\demos\\imageSequence");
+	_chdir("D:\\agood");
 
-	auto pointsCameras=threeDimensionReconstruction("orb.lst","match.lst",5400,2700);
+	auto pointsCameras=threeDimensionReconstruction("orb.lst","match.lst",512,256);
 	ofstream f1;
 	f1.open("points.txt");
 	f1<<(pointsCameras.second);

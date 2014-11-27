@@ -332,17 +332,103 @@ MatrixXd bestPointCoefficient(double a,double b,double c,double d,double e,doubl
 
 
 
-MatrixXd functionForPointEstimate(const MatrixXd& var1,const MatrixXd& var2,const MatrixXd& var3)
+MatrixXd projectionErrorForPointReconstruction(const MatrixXd& var1,const MatrixXd& var2,const MatrixXd& var3)
 {
 	return  projectionError (var1,var3,var2);
 }
 
 
-MatrixXd jacobianForPointEstimate(const MatrixXd& var1,const MatrixXd& var2,const MatrixXd& var3)
+MatrixXd jacobianForPointReconstruction(const MatrixXd& var1,const MatrixXd& var2,const MatrixXd& var3)
 {
 	return jacobianForPoint (var1,var3,var2);
 }
 
+MatrixXd coeffcientLinear(const MatrixXd& var0,const MatrixXd& var1)
+{
+	double b0,b1,b2;
+	b0=var0(0,0);
+	b1=var0(0,1);
+	b2=var0(0,2);
+	double c0,c1,c2;
+	c0=var1(0,0);
+	c1=var1(0,1);
+	c2=var1(0,2);
+	MatrixXd A0(3,4);
+	double t2 ,t3 ,t4 ,t5 ,t6 ,t7 ,t8 ,t9 ,t10 ,t11 ;
+	t2 = c1*c1;
+	t3 = c2*c2;
+	t4 = t3*2.0;
+	t5 = c0*c0;
+	t6 = t5*2.0;
+	t7 = t2*2.0;
+	t8 = b0*c0;
+	t9 = b1*c1;
+	t10 = b2*c2;
+	t11 = t8+t9+t10;
+	A0(0,0) = t4+t7;
+	A0(0,1) = c0*c1*-2.0;
+	A0(0,2) = c0*c2*-2.0;
+	A0(0,3) = b0*(t2+t3)*-2.0+c0*(b1*c1*2.0+b2*c2*2.0);
+	A0(1,0) = c0*c1*-2.0;
+	A0(1,1) = t4+t6;
+	A0(1,2) = c1*c2*-2.0;
+	A0(1,3) = b1*-2.0+c1*t11*2.0;
+	A0(2,0) = c0*c2*-2.0;
+	A0(2,1) = c1*c2*-2.0;
+	A0(2,2) = t6+t7;
+	A0(2,3) = b2*-2.0+c2*t11*2.0;
+	return A0;
+}
+
+MatrixXd reconstructPointLinear(const MatrixXd& projections, const MatrixXd& cameras)
+{
+	assert(projections.rows()>1);
+	assert(projections.rows()==cameras.rows());
+
+	auto calculateSingleCoefficientLinear=[](const MatrixXd& prj,const MatrixXd& cam)->MatrixXd
+	{
+		MatrixXd p=cam.block(0,3,1,3);
+		MatrixXd u=(rotationThomason(cam.block(0,0,1,3)).transpose()*prj.transpose()).transpose();
+		return coeffcientLinear(p,u);
+	};
+
+	MatrixXd coefficients(3,4);
+	coefficients*=0.0;
+
+	for (int i = 0; i < projections.rows(); i++)
+	{
+		coefficients+=calculateSingleCoefficientLinear(projections.row(i),cameras.row(i));
+	}
+
+	double a,b,c,d,e,f,g,h,i,j,k,l;
+
+	a	=	coefficients(0,0);
+	b	=	coefficients(0,1);
+	c	=	coefficients(0,2);
+	d	=	coefficients(0,3);
+	e	=	coefficients(1,0);
+	f	=	coefficients(1,1);
+	g	=	coefficients(1,2);
+	h	=	coefficients(1,3);
+	i	=	coefficients(2,0);
+	j	=	coefficients(2,1);
+	k	=	coefficients(2,2);
+	l	=	coefficients(2,3);
+
+	double x,y,z;
+	double r=1.0/(a*f*k - a*g*j - b*e*k + b*g*i + c*e*j - c*f*i);
+	x=-(b*g*l - b*h*k - c*f*l + c*h*j + d*f*k - d*g*j)*r;
+	y=(a*g*l - a*h*k - c*e*l + c*h*i + d*e*k - d*g*i)*r;
+	z=-(a*f*l - a*h*j - b*e*l + b*h*i + d*e*j - d*f*i)*r;
+
+	MatrixXd result=MatrixXd(1,3);
+	result(0,0)=x;
+	result(0,1)=y;
+	result(0,2)=z;
+
+	return result;
+}
+/*
 MatrixXd reconstructPoint(const MatrixXd& projections,const MatrixXd& cameras)
 {	
 	MatrixXd obj_vals=MatrixXd::Zero(1,projections.rows()*observationDim);
@@ -350,8 +436,8 @@ MatrixXd reconstructPoint(const MatrixXd& projections,const MatrixXd& cameras)
 	vector<MatrixXd> data(2);
 	data[0]=projections;
 	data[1]=cameras;
-	return levenbergM_adhoc(data,obj_vals,&functionForPointEstimate,&jacobianForPointEstimate,initPara);
-}
+	return levenbergM_adhoc(data,obj_vals,&projectionErrorForPointReconstruction,&jacobianForPointReconstruction,initPara);
+}*/
 
 double length(const MatrixXd& a)
 {
@@ -388,12 +474,12 @@ bool pointBeforeCamera(const MatrixXd& point,const MatrixXd& projection,const Ma
 	return pointBeforeCamera_xpu(coordinate,MatrixXd::Zero(1,3),projection) && length(coordinate)>1.0;
 }
 
-bool bestPoint(const MatrixXd& projections,const MatrixXd& cameras,vector<bool>& flags,MatrixXd& pnt)
+bool reconstructPoint(const MatrixXd& projections,const MatrixXd& cameras,vector<bool>& flags,MatrixXd& pnt)
 {
 	assert(projections.rows()>1);
 	assert(projections.rows()==cameras.rows());
 	assert(projections.rows()==flags.size());
-	flags.resize(flags.size(),false());
+	flags.resize(flags.size(),false);
 
 
 
@@ -407,7 +493,7 @@ bool bestPoint(const MatrixXd& projections,const MatrixXd& cameras,vector<bool>&
 
 	do
 	{
-		pnt=reconstructPoint(tprojections,tcameras);
+		pnt=reconstructPointLinear(tprojections,tcameras);
 
 		usedcamera=tprojections.rows();
 		goodcamera=0;	
@@ -531,7 +617,7 @@ double angleBetween(const MatrixXd& a,const MatrixXd& b)
 
 
 
-pair<MatrixXd,vector<double> > bestPoints(const MatrixXd& spnts1,const vector<int>& ind1,const MatrixXd& spnts2,const vector<int>& ind2,const MatrixXd&  cameraPositions)
+pair<MatrixXd,vector<double> > reconstructPointsFor2Cameras(const MatrixXd& spnts1,const vector<int>& ind1,const MatrixXd& spnts2,const vector<int>& ind2,const MatrixXd&  cameraPositions)
 {
 	assert(ind1.size()==ind2.size());
 
@@ -548,7 +634,7 @@ pair<MatrixXd,vector<double> > bestPoints(const MatrixXd& spnts1,const vector<in
 		MatrixXd projs(2,3);
 		projs.row(0)=spnts1.row(ind1[i]);
 		projs.row(1)=spnts2.row(ind2[i]);
-		points.row(i)=reconstructPoint(projs,cameraPositions);
+		points.row(i)=reconstructPointLinear(projs,cameraPositions);
 		if(pointBeforeCamera(points.row(i),projs.row(0),cameraPositions.row(0) ) && pointBeforeCamera(points.row(i),projs.row(1),cameraPositions.row(1) ))
 		{
 			
@@ -659,7 +745,7 @@ auto geometricReconstructionFrom2Frames(const MatrixXd& sphericalPoints1,const v
 		cameras.row(0)*=0;
 		cameras.row(1)=transtionAndRotations[i];
 
-		bestPointCandidates[i]=bestPoints(sphericalPoints1,ind1,sphericalPoints2,ind2,cameras);
+		bestPointCandidates[i]=reconstructPointsFor2Cameras (sphericalPoints1,ind1,sphericalPoints2,ind2,cameras);
 		goodPointCount[i]=countDouble(bestPointCandidates[i].second);
 
 		if(i==0)
@@ -821,7 +907,7 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 					curCams.row(i)=cameraPosition.row(curCameras[i]);
 				}
 				MatrixXd pnt;
-				if(bestPoint(curPrj,curCams,curflags,pnt))
+				if(reconstructPoint(curPrj,curCams,curflags,pnt))
 				{
 					alreadyReconstructed[s]=true;
 					points.row(s)=pnt;
