@@ -471,7 +471,7 @@ bool pointBeforeCamera(const MatrixXd& point,const MatrixXd& projection,const Ma
 
 	MatrixXd coordinate=(rotation*(point-transition).transpose()).transpose();
 
-	return pointBeforeCamera_xpu(coordinate,MatrixXd::Zero(1,3),projection) && length(coordinate)>1.0;
+	return pointBeforeCamera_xpu(coordinate,MatrixXd::Zero(1,3),projection) && (length(coordinate)>1.0);
 }
 
 bool reconstructPoint(const MatrixXd& projections,const MatrixXd& cameras,vector<bool>& flags,MatrixXd& pnt)
@@ -501,10 +501,14 @@ bool reconstructPoint(const MatrixXd& projections,const MatrixXd& cameras,vector
 		vector<int> tmatch;
 		for (int i = 0; i < tprojections.rows(); i++)
 		{
-			if(pointBeforeCamera(pnt,tprojections.row(i),tcameras.row(i)) && projectionErrorValue(pnt,tprojections.row(i),tcameras.row(i))<constrain_on_point_error )
+			if(pointBeforeCamera(pnt,tprojections.row(i),tcameras.row(i)) )
 			{
-				tmatch.push_back(match[i]);
-				++goodcamera;
+				if( projectionErrorValue(pnt,tprojections.row(i),tcameras.row(i))<constrain_on_point_error )
+				{
+					tmatch.push_back(match[i]);
+					++goodcamera;
+			
+				}
 			}
 		}
 
@@ -911,6 +915,15 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 					curCams.row(i)=cameraPosition.row(curCameras[i]);
 				}
 				MatrixXd pnt;
+				pnt=reconstructPointLinear(curPrj,curCams);
+				alreadyReconstructed[s]=true;
+				points.row(s)=pnt;
+				for (int i = 0; i < curCameras.size(); i++)
+				{
+					projectionsValid[s][curCameras[i]]=true;
+					
+				}
+				/*
 				if(reconstructPoint(curPrj,curCams,curflags,pnt))
 				{
 					alreadyReconstructed[s]=true;
@@ -922,7 +935,7 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 							projectionsValid[s][curCameras[i]]=true;
 						}
 					}
-				}
+				}*/
 			}
 		}
 	};
