@@ -244,9 +244,9 @@ void testInter()
 	p<<0,0,0,1,1,1;
 	u<<2,4,5,3,2,1;
 
-	auto pnt= reconstructPoint (p,u);
+//	auto pnt= reconstructPoint (p,u);
 
-	cout<<pnt<<endl;
+//	cout<<pnt<<endl;
 
 	cout<<MatrixXd::Identity(3,3)<<endl;
 	cout<<acos(-0.5)<<endl;
@@ -290,7 +290,7 @@ void testBestPoint()
 
 	b<<  0.5960 ,   0.5603  ,  0.5752,
     0.6211  ,  0.5869 ,   0.5194;
-	reconstructPoint(a,b);
+//	reconstructPoint(a,b);
 }
 
 int main()
@@ -299,7 +299,7 @@ int main()
 	
 	_chdir("D:\\agood");
 
-	auto pointsCameras=threeDimensionReconstruction("orb.lst","match.lst",512,256);
+	auto pointsCameras=threeDimensionReconstruction("torb.lst","tmatch.lst",512,256);
 	ofstream f1;
 	f1.open("points.txt");
 	f1<<(pointsCameras.second);

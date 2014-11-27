@@ -630,7 +630,7 @@ pair<MatrixXd,vector<double> > reconstructPointsFor2Cameras(const MatrixXd& spnt
 	for (int i = 0; i < ind1.size(); i++)
 	{
 		
-		cout<<i<<"\t";
+		//cout<<i<<"\t";
 		MatrixXd projs(2,3);
 		projs.row(0)=spnts1.row(ind1[i]);
 		projs.row(1)=spnts2.row(ind2[i]);
@@ -830,7 +830,7 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 	
 
 	
-	auto buildFromNothingForTwoFrames=[&correspondences,&sphericalFeaturesAndCameras,&featureIsPoint,&cameraPosition,&alreadyEstimated,&alreadyReconstructed,&points](int cameraIndex)
+	auto buildFromNothingForTwoFrames=[&correspondences,&sphericalFeaturesAndCameras,&featureIsPoint,&cameraPosition,&alreadyEstimated,&alreadyReconstructed,&points,&projectionsValid](int cameraIndex)
 	{
 		assert(cameraIndex==0);
 		assert(cameraIndex<correspondences.size());
@@ -862,7 +862,8 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 			{
 				points.row(index[i])=pointsError2Frame.first.row(i);
 				alreadyReconstructed[index[i]]=true;
-
+				projectionsValid[index[i]][cameraIndex]=true;
+				projectionsValid[index[i]][cameraIndex+1]=true;
 			}
 			else
 			{
@@ -935,9 +936,9 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 	auto insersectSpecial=[](unordered_map<int,bool>& a,unordered_map<int,cameraType>& b)->unordered_set<int>
 	{
 		unordered_set<int> c;
-		for(auto& d:b)
+		for(auto& d:a)
 		{
-			if(a.count(d.first) && d.second)
+			if(b.count(d.first) && d.second)
 				c.insert(d.first);
 		}
 
