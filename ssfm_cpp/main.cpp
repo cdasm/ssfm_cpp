@@ -299,7 +299,7 @@ int main()
 	
 	_chdir("D:\\agood");
 
-	auto pointsCameras=threeDimensionReconstruction("torb.lst","tmatch.lst",512,256);
+	auto pointsCameras=threeDimensionReconstruction("orb.lst","match.lst",512,256);
 	ofstream f1;
 	f1.open("points.txt");
 	f1<<(pointsCameras.second);

@@ -780,8 +780,10 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 	vector<vector<int> > featureIsPoint;
 
     vector< unordered_map<int,int> > trajectories=collectFromPairwiseMatching(featureFileName,matchFileName,features,correspondences,contain,featureIsPoint);
-
+	//each trajectory corresponds to a point
+	//the first is camera index, the second is spherical point index (the projection)
 	vector<unordered_map<int,bool> > projectionsValid(trajectories.size());
+	//whether each projection is valid or not
 
 	for ( int i=0;i<trajectories.size();++i)
 	{
@@ -810,7 +812,8 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 		return sfea;
 	};
 	vector<MatrixXd> sphericalFeaturesAndCameras(features.size()+1);
-	
+	//the last element is a matrix of camera positions (number of cameras * 6)
+	//each of the other elments is a matrix is a matrix of spherical points belonging to one camera (number of points *3)
 	for (int i = 0; i < sphericalFeaturesAndCameras.size()-1; i++)
 	{
 		sphericalFeaturesAndCameras[i]=convertFeature(features[i]);
@@ -965,14 +968,16 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 
 	auto bundleAdjustment=[&](unordered_map<int,cameraType>& lbundlePara)
 	{
+		//the input is in a format of pairs, first is camera index, second is camera type
 		unordered_set<int> pntIndx;
 
-		unordered_map<MatrixXd*, unordered_map<int,pair<int,int> > > parameterLookUp;
+		unordered_map<MatrixXd*, unordered_map<int,pair<int,int> > > parameterLookUp; //(first is a pointer of the referred matrix, i.e.
+																					  //camera or point, second contains the row index and the corresponces in bundle adjustment
 
-		vector<pair<int,int> > projections;
+		vector<pair<int,int> > projections; //first is point index, second is camera index
 
-		unordered_set<int> cameraForBundle;
-		unordered_set<int> pointForBundle;
+		unordered_set<int> cameraForBundle; //a set of camera indexs for bundle adjustment
+		unordered_set<int> pointForBundle; // a set of point indexs for bundle adjustemnt
 
 		for (auto& s:lbundlePara)
 		{
@@ -995,7 +1000,8 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 							for(auto x:curPrj)
 							{
 								projections.push_back(make_pair(w,x));
-								cameraForBundle.insert(x);
+								if(lbundlePara[x]!=cameraType::_static)
+									cameraForBundle.insert(x);
 							}
 						}
 						
@@ -1022,47 +1028,60 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 		for(auto& pnt:pointForBundle)
 		{
 			parameterLookUp[&points][pnt]=make_pair(parameterNumber,pointDim);
-			parameterNumber+=3;
+			parameterNumber+=pointDim;
 		}
 
 		/*
 		vector<funcType2> functions(2);
-		functions[0]=&functionForRotationAndTransition;
-		functions[1]=&functionForRotationAndTransitionUnitLength;
+		functions[0]=&projectionError;
+		functions[1]=&projectionErrorUnitLength;
 		vector<funcType2> jacabianFunctions(4);
-		jacabianFunctions[0]=&jacobianForRotationAndTransition;
-		jacabianFunctions[1]=&jacobianForRotationAndTransitionUnitLength;
+		jacabianFunctions[0]=&jacobianForCamera;
+		jacabianFunctions[1]=&jacobianForCameraUnitLength;
 		jacabianFunctions[2]=&jacobianForPoint;
 		jacabianFunctions[3]=&jacobianForPointUnitLength;
 		*/
 		unordered_map<cameraType,int> funcIndex;
 		funcIndex[cameraType::_static]=0;
-		funcIndex[cameraType::_ordinary]=0;		
+		funcIndex[cameraType::_ordinary]=0;			
 		funcIndex[cameraType::_unitLength]=1;
+		
 		unordered_map<cameraType,int> jfuncForPointIndex;
+		jfuncForPointIndex[cameraType::_static]=2;
 		jfuncForPointIndex[cameraType::_ordinary]=2;		
 		jfuncForPointIndex[cameraType::_unitLength]=3;
+		
 		unordered_map<cameraType,int> jfuncForCameraIndex;
 		jfuncForCameraIndex[cameraType::_ordinary]=0;		
 		jfuncForCameraIndex[cameraType::_unitLength]=1;
 
 
 		vector<pair<pair<int,int>,vector<pair<dataORParameter,pair<int,int>>>>> funcDataMap;
+		//first contains where to start setting value and which function to use for calculation
+		//second contains a vector which specify where to get the data, in this vector, if it is data, then 
+		//the value is get from dataset, if it is parameter, then the data is get from parameter to estimate
 		vector<pair<pair<int,pair<int,int>>,vector<pair<dataORParameter,pair<int,int>>>>> jfuncDataMap;
+		//first contains where to stert setting value (row and column) and which function to use for calculation
+		//second is the same with funcDataMap
 
 		for (int i = 0; i < projections.size(); i++)
 		{
 			auto& proj=projections[i];
 			auto _camType=lbundlePara[proj.second];
+		
 			pair<int,int> funcPosmap;		
+			
 			funcPosmap.first=funcIndex[_camType];
 			funcPosmap.second=i*observationDim;
+			
 			vector<pair<dataORParameter,pair<int,int>>> datamap(3);
-			pair<int,pair<int,int>> jfuncPosmap;
 
+			pair<int,pair<int,int>> jfuncPosmap;
 			
 
 			datamap[0]=make_pair(dataORParameter::_data,make_pair(proj.second,trajectories[proj.first][proj.second]));
+			//the parameter of projections, this is always data
+
 			datamap[1]=make_pair(dataORParameter::_parameter,parameterLookUp[&points][proj.first]);
 
 			jfuncPosmap.first=jfuncForPointIndex[_camType];
@@ -1102,7 +1121,8 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 			{
 				if(paratop.first==(&cameraPosition) && lbundlePara[ para.first]==cameraType::_unitLength)
 				{
-					intit_parameters.block(0,para.second.first,1,para.second.second)=cameraPosUnitLenthConvert((* paratop.first).row(para.first),1);
+				//	MatrixXd tem=
+					intit_parameters.block(0,para.second.first,1,para.second.second)=cameraPosUnitLenthConvert((* paratop.first).row(para.first),-1);
 				}
 				else
 				{
@@ -1120,7 +1140,7 @@ auto threeDimensionReconstruction(const string& featureFileName,const string& ma
 				if(paratop.first==(&cameraPosition) && lbundlePara[ para.first]==cameraType::_unitLength)
 				{
 					//intit_parameters.block(0,para.second.first,1,para.second.second)=cameraPosUnitLenthConvert((* para.first.first).row(para.first.second),1);
-					(* paratop.first).row(para.first)=cameraPosUnitLenthConvert(est_parameters.block(0,para.second.first,1,para.second.second),-1);
+					(* paratop.first).row(para.first)=cameraPosUnitLenthConvert(est_parameters.block(0,para.second.first,1,para.second.second),1);
 				}
 				else
 				{
@@ -1305,7 +1325,7 @@ MatrixXd estimateCameraParameter(const MatrixXd& projPoints,const vector<int>& i
 	for (int i = 0; i < ind1.size(); i++)
 	{
 		ddata[0].block(i,0,1,3)=projPoints.row(ind1[i]);
-		ddata[1].block(i,3,1,3)=points.row(ind2[i]);
+		ddata[1].block(i,0,1,3)=points.row(ind2[i]);
 	}
 
 	

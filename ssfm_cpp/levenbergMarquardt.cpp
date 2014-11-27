@@ -311,13 +311,13 @@ MatrixXd levenbergM_advanced(const vector<MatrixXd>& dataset,const vector<pair<p
 				{
 					if(jfuncDataMap[i].second[j].first==dataORParameter::_data)
 					{
-						pair<int,int> curpair=funcDataMap[i].second[j].second;
+						pair<int,int> curpair=jfuncDataMap[i].second[j].second;
 						curparas.push_back(dataset[curpair.first].row(curpair.second));
 					}
 
 					else if(jfuncDataMap[i].second[j].first==dataORParameter::_parameter)
 					{
-						pair<int,int> curpair=funcDataMap[i].second[j].second;
+						pair<int,int> curpair=jfuncDataMap[i].second[j].second;
 						curparas.push_back(para_est.block(0,curpair.first,1,curpair.second));
 					}
 				}
@@ -326,6 +326,10 @@ MatrixXd levenbergM_advanced(const vector<MatrixXd>& dataset,const vector<pair<p
 				MatrixXd upd=jfuncs[funcind](curparas);
 				
 				auto cursetJ=tosetSparseMatrix(upd,sr,sc);
+				
+			
+			//	J.setFromTriplets(cursetJ.begin(),cursetJ.end());
+			//	cout<<i<<" ";
 				tosetJ.insert(tosetJ.end(),cursetJ.begin(),cursetJ.end());
 			}
 			J.setFromTriplets(tosetJ.begin(),tosetJ.end());
